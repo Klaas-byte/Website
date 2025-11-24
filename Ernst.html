@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Klaas de Jager — EY IT Risk</title>
+  <meta name="description" content="Mijn 6 maanden scriptiestage bij Ernst & Young (EY) op de afdeling IT Risk: dagelijkse werkzaamheden, scriptie over onboarding en wat ik heb geleerd.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💼</text></svg>">
+
+  <style>
+    /* --- CSS reset (klein) --- */
+    *,*::before,*::after{box-sizing:border-box}
+    html:focus-within{scroll-behavior:smooth}
+    body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;line-height:1.6;color:#0f172a;background:#ffffff}
+    img,picture,svg,video{display:block;max-width:100%;height:auto}
+    input,button,textarea,select{font:inherit}
+    a{color:inherit}
+
+    /* --- Design tokens --- */
+    :root{
+      --bg:#ffffff;
+      --ink:#0f172a;         /* slate-900 */
+      --muted:#475569;       /* slate-600 */
+      --brand:#78797b;       /* blauw/grijs */
+      --brand-ink:#ffffff;
+      --surface:#f1f5f9;     /* slate-100 */
+      --ring:#93c5fd;        /* blue-300 */
+      --maxw: 64rem;         /* 1024px */
+      --radius: 1.25rem;     /* 20px */
+      --shadow: 0 10px 25px rgba(2,6,23,.08);
+    }
+
+    /* --- Layout helpers --- */
+    .container{width:100%;max-width:var(--maxw);margin-inline:auto;padding:clamp(16px,3vw,32px)}
+    .grid{display:grid;gap:clamp(16px,2.5vw,24px)}
+    .grid-3{grid-template-columns:repeat(1,minmax(0,1fr))}
+    @media (min-width: 768px){.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+    header{
+      position:sticky;
+      top:0;
+      background:rgba(255,255,255,.9);
+      backdrop-filter:saturate(180%) blur(10px);
+      border-bottom:1px solid #e2e8f0;
+      z-index:20
+    }
+    nav{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+    }
+    .brand{font-weight:700;letter-spacing:.2px}
+    .nav-links{display:flex;gap:16px;flex-wrap:wrap}
+    .nav-links a{padding:8px 10px;border-radius:10px;text-decoration:none;white-space:nowrap}
+    .nav-links a:focus-visible{outline:3px solid var(--ring);outline-offset:2px}
+
+    .nav-right{
+      display:flex;
+      align-items:center;
+      gap:16px;
+    }
+
+    .lang-switch{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .lang-switch a{
+      font-size:20px;
+      text-decoration:none;
+      padding:4px 8px;
+      border-radius:999px;
+      border:2px solid transparent;
+      line-height:1;
+      cursor:pointer;
+      transition:border .2s ease, box-shadow .2s ease, transform .1s ease;
+    }
+    .lang-switch a:hover{
+      transform:translateY(-1px);
+    }
+    .lang-switch a.active{
+      border-color:var(--ring);
+      box-shadow:0 0 0 2px rgba(147,197,253,.5);
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(32px,6vw,80px) 0;
+      background: linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
+    }
+
+    /* Honingraatpatroon */
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='120' height='104' viewBox='0 0 120 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%2394a3b8' stroke-opacity='0.35' stroke-width='1'%3E%3Cpath d='M60 0l60 34v68l-60 34L0 102V34z'/%3E%3Cpath d='M0 34l60 34 60-34M0 102l60 34 60-34M60 68v68'/%3E%3C/g%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 160px 138px;
+      opacity: 0.4;
+      z-index: 0;
+    }
+
+    .hero > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero h1{font-size:clamp(28px,5vw,44px);line-height:1.2;margin:0 0 12px 0}
+    .hero p{font-size:clamp(16px,2.2vw,20px);color:var(--muted);max-width:60ch}
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:12px 18px;
+      border-radius:999px;
+      background:var(--brand);
+      color:var(--brand-ink);
+      border:0;
+      text-decoration:none;
+      box-shadow:var(--shadow);
+      cursor:pointer;
+    }
+    .btn:hover{filter:brightness(1.03)}
+    .btn:active{transform:translateY(1px)}
+    .btn:focus-visible{outline:4px solid var(--ring);outline-offset:2px}
+
+    .card{
+      background:var(--surface);
+      border:1px solid #e2e8f0;
+      border-radius:var(--radius);
+      padding:20px;
+      box-shadow:var(--shadow);
+    }
+    .card h3{margin:0 0 6px 0}
+    .card p{margin:0;color:var(--muted)}
+
+    .cta{
+      background:#0b1220;
+      color:white;
+      border-radius:var(--radius);
+      padding:clamp(20px,3vw,28px);
+      margin-top:32px;
+    }
+    .cta h2{margin-top:0}
+    .cta ul{margin:12px 0 0 1rem;padding:0}
+    .cta li{margin-bottom:4px}
+    .cta p{color:#e5e7eb}
+
+    footer{padding:32px 0;border-top:1px solid #e2e8f0;color:#64748b}
+
+    /* --- Accessibility helpers --- */
+    .skip-link{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden}
+    .skip-link:focus{left:16px;top:16px;width:auto;height:auto;padding:10px 14px;background:#111827;color:white;border-radius:10px}
+
+    /* Motion respect */
+    @media (prefers-reduced-motion:no-preference){
+      .float-in{animation:floatIn .6s ease-out both}
+      @keyframes floatIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    }
+
+    @media (max-width: 768px) {
+      nav{flex-direction:column;align-items:flex-start}
+      .nav-right{width:100%;justify-content:space-between}
+    }
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link" data-i18n="a11y.skip">Direct naar inhoud</a>
+
+  <header>
+    <div class="container">
+      <nav aria-label="Hoofdnavigatie">
+        <div class="brand" data-i18n="brand.title">Klaas de Jager — EY IT Risk</div>
+        <div class="nav-right">
+          <div class="nav-links" role="menubar">
+            <a role="menuitem" href="#overzicht" data-i18n="nav.overview">Overzicht</a>
+            <a role="menuitem" href="#werk" data-i18n="nav.work">Werkzaamheden &amp; Onderzoek</a>
+            <a role="menuitem" href="#leerpunten" data-i18n="nav.learned">Wat ik heb geleerd</a>
+          </div>
+          <div class="lang-switch" aria-label="Taalkeuze">
+            <a href="#" data-lang="nl" class="active" aria-label="Nederlands">🇳🇱</a>
+            <a href="#" data-lang="en" aria-label="English">🇬🇧</a>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- HERO -->
+    <section class="hero" id="overzicht">
+      <div class="container grid" style="align-items:center">
+        <div class="float-in">
+          <h1 data-i18n="hero.title">Mijn ervaring bij Ernst &amp; Young (EY)</h1>
+          <p data-i18n="hero.body1">
+            Zes maanden scriptiestage op de afdeling <strong>IT Risk</strong>, op het snijvlak van technologie,
+            data en assurance. Technology Risk bij EY combineert IT, processen en finance. Voor mij als TBK-student was dit de ideale plek om te zien hoe je risico’s, processen en mensen samenbrengt in één verhaal voor de klant. Mijn rol: ondersteunen, observeren, doorvragen en dat gebruiken als input voor mijn onderzoek naar onboarding.
+          </p>
+          <p style="margin-top:10px" data-i18n="hero.body2">
+            Periode: kwartiel 3 &amp; 4 (2023/2024) · Locatie: EY Amsterdam, Technology Risk.
+          </p>
+          <p style="margin-top:16px">
+            <a class="btn" href="index.html" aria-label="Terug naar de homepage">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 18l-6-6 6-6"/>
+                <path d="M21 12H9"/>
+              </svg>
+              <span data-i18n="hero.back">Terug naar homepage</span>
+            </a>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- WERK BIJ IT RISK -->
+    <section id="werk" class="container" aria-labelledby="werk-title">
+      <h2 id="werk-title" data-i18n="work.title">Wat ik deed bij IT Risk</h2>
+      <div class="grid grid-3" style="margin-top:16px">
+        <article class="card">
+          <h3 data-i18n="work.card1.title">Dagelijkse ondersteuning in audits</h3>
+          <p data-i18n="work.card1.body">
+            Meedraaien in de <strong>day-to-day werkzaamheden</strong> van IT Risk: controleren van data,
+            voorbereiden en nalopen van bestanden, checken of documentatie en evidence aansluiten
+            op EY-procedures en het werk van de auditteams. Praktisch, detailgericht en sterk
+            procesgedreven.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3 data-i18n="work.card2.title">Werken in een Big Four-omgeving</h3>
+          <p data-i18n="work.card2.body">
+            Ervaren hoe planning, tools (zoals Atlas/Canvas) en strakke procedures samenkomen in
+            grote assurancteams. Leren omgaan met piekdrukte, strakke deadlines en hybride werken,
+            terwijl je kwaliteit en documentatie op niveau houdt.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3 data-i18n="work.card3.title">Meekijken achter de schermen van onboarding</h3>
+          <p data-i18n="work.card3.body">
+            Omdat mijn scriptie over onboarding ging, had ik veel contact met HR, planning,
+            managers en starters. Daardoor kreeg ik inzicht in <strong>hoe nieuwe IT Risk-medewerkers echt
+            landen in de praktijk</strong> – los van hoe het proces op papier is ingericht.
+          </p>
+        </article>
+      </div>
+
+      <div class="cta">
+        <h2 data-i18n="cta.title">“Hoe kan het onboardingproces worden geoptimaliseerd met als doel de productiviteit van nieuwe assurance-medewerkers te verbeteren?”</h2>
+        <ul>
+          <li data-i18n="cta.li1">Analyse van het bestaande onboardingproces</li>
+          <li data-i18n="cta.li2">Interviews met medewerkers om ervaringen op te halen</li>
+          <li data-i18n="cta.li3">Enquête uitgevoerd voor bredere input</li>
+          <li data-i18n="cta.li4">Vergelijkend onderzoek naar onboarding bij andere organisaties</li>
+          <li data-i18n="cta.li5">Theorie gebruikt om bevindingen te structureren</li>
+          <li data-i18n="cta.li6">Verbeterconcept ontworpen op basis van alle inzichten</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- LEERPUNTEN -->
+    <section id="leerpunten" class="container" aria-labelledby="leer-title">
+      <h2 id="leer-title" data-i18n="learn.title">Wat ik heb geleerd tijdens mijn tijd bij EY</h2>
+      <div class="grid grid-3" style="margin-top:16px">
+        <article class="card">
+          <h3 data-i18n="learn.card1.title">Onderzoek doen in een corporate omgeving</h3>
+          <p data-i18n="learn.card1.body">
+            Leren hoe je binnen een grote organisatie interviews regelt, mensen aan tafel krijgt en
+            toch kritisch blijft. Balans vinden tussen diplomatiek communiceren en scherp zijn op
+            data, aannames en conclusies.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3 data-i18n="learn.card2.title">Van theorie naar concrete verbeteringen</h3>
+          <p data-i18n="learn.card2.body">
+            Modellen als ADKAR, Social Learning en de vier C’s van onboarding gebruiken om echte
+            problemen te duiden: wachttijden, informatiegaten, onboarding die te theoretisch is en
+            niet genoeg meeloopt met de praktijk op de werkvloer.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3 data-i18n="learn.card3.title">Hybride werken &amp; eigen verantwoordelijkheid</h3>
+          <p data-i18n="learn.card3.body">
+            In een hybride omgeving moet je zelf actief vragen stellen, afspraken plannen en feedback
+            ophalen. Ik leerde proactief te zijn: niet wachten tot iemand iets uitlegt, maar zelf de
+            structuur maken en mensen benaderen.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3 data-i18n="learn.card4.title">Omgaan met complexiteit</h3>
+          <p data-i18n="learn.card4.body">
+            EY is groot, de processen zijn complex en de onboarding raakt HR, IT, planning en de
+            business. Ik leerde die complexiteit terug te brengen tot een helder verhaal met concrete
+            keuzes en scenario’s.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3 data-i18n="learn.card5.title">Werken met data én mensen</h3>
+          <p data-i18n="learn.card5.body">
+            Combinatie van enquêteresultaten, interviewquotes en procesbeschrijvingen. Data
+            gebruiken om een punt te maken, maar altijd gekoppeld aan verhalen en ervaringen van
+            de mensen die in het proces werken.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3 data-i18n="learn.card6.title">Mijn rol als kritische sparringpartner</h3>
+          <p data-i18n="learn.card6.body">
+            Tijdens de stage groeide ik in de rol van “degene die de waarom-vraag stelt”. Niet alles
+            accepteren omdat “het nou eenmaal zo gaat”, maar steeds zoeken naar logica,
+            eenvoud en betere manieren om mensen productief te maken.
+          </p>
+        </article>
+      </div>
+    </section>
+  
+  </main>
+
+  <footer>
+    <div class="container">
+      <small>
+        © <span id="year"></span> Klaas de Jager –
+        <span data-i18n="footer.ey">Ervaring bij Ernst &amp; Young.</span>
+        <span data-i18n="footer.rights">Alle rechten voorbehouden.</span>
+      </small>
+    </div>
+  </footer>
+
+  <script>
+    // jaar in footer
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // ---------- I18N DICTIONARY ----------
+    const i18n = {
+      en: {
+        "meta.title": "Klaas de Jager — EY IT Risk",
+        "a11y.skip": "Skip to content",
+
+        "brand.title": "Klaas de Jager — EY IT Risk",
+        "nav.overview": "Overview",
+        "nav.work": "Tasks & Research",
+        "nav.learned": "What I learned",
+
+        "hero.title": "My experience at Ernst &amp; Young (EY)",
+        "hero.body1": "A six-month thesis internship in the <strong>IT Risk</strong> department, at the intersection of technology, data and assurance. Technology Risk at EY combines IT, processes and finance. For me as an Industrial Engineering student this was the ideal place to see how risks, processes and people are brought together into one story for the client. My role: support, observe, keep asking questions and use that as input for my research into onboarding.",
+        "hero.body2": "Period: quarter 3 &amp; 4 (2023/2024) · Location: EY Amsterdam, Technology Risk.",
+        "hero.back": "Back to homepage",
+
+        "work.title": "What I did in IT Risk",
+        "work.card1.title": "Daily support in audits",
+        "work.card1.body": "Participating in the <strong>day-to-day work</strong> of IT Risk: checking data, preparing and reviewing files, verifying whether documentation and evidence match EY procedures and the work of the audit teams. Practical, detail-oriented and very process-driven.",
+        "work.card2.title": "Working in a Big Four environment",
+        "work.card2.body": "Experiencing how planning, tools (such as Atlas/Canvas) and strict procedures come together in large assurance teams. Learning to deal with peak workloads, tight deadlines and hybrid working, while keeping quality and documentation at the right level.",
+        "work.card3.title": "Looking behind the scenes of onboarding",
+        "work.card3.body": "Because my thesis focused on onboarding, I had a lot of contact with HR, planning, managers and newcomers. This gave me insight into <strong>how new IT Risk employees actually land in practice</strong> – separate from how the process is designed on paper.",
+
+        "cta.title": "“How can the onboarding process be optimised in order to improve the productivity of new assurance employees?”",
+        "cta.li1": "Analysis of the existing onboarding process",
+        "cta.li2": "Interviews with employees to capture their experiences",
+        "cta.li3": "Survey conducted for broader input",
+        "cta.li4": "Benchmarking onboarding with other organisations",
+        "cta.li5": "Theory used to structure findings",
+        "cta.li6": "Improvement concept designed based on all insights",
+
+        "learn.title": "What I learned during my time at EY",
+        "learn.card1.title": "Doing research in a corporate environment",
+        "learn.card1.body": "Learning how to arrange interviews within a large organisation, get people around the table and still remain critical. Finding the balance between diplomatic communication and being sharp on data, assumptions and conclusions.",
+        "learn.card2.title": "From theory to concrete improvements",
+        "learn.card2.body": "Using models such as ADKAR, Social Learning and the four C’s of onboarding to understand real issues: waiting times, information gaps, onboarding that is too theoretical and not sufficiently connected to practice on the work floor.",
+        "learn.card3.title": "Hybrid working & personal responsibility",
+        "learn.card3.body": "In a hybrid environment you need to actively ask questions, schedule meetings and seek feedback yourself. I learned to be proactive: not waiting for someone to explain things, but creating structure myself and approaching people.",
+        "learn.card4.title": "Dealing with complexity",
+        "learn.card4.body": "EY is large, the processes are complex and onboarding touches HR, IT, planning and the business. I learned to reduce that complexity to a clear story with concrete choices and scenarios.",
+        "learn.card5.title": "Working with data and people",
+        "learn.card5.body": "Combining survey results, interview quotes and process descriptions. Using data to make a point, but always linked to stories and experiences of the people working in the process.",
+        "learn.card6.title": "My role as critical sparring partner",
+        "learn.card6.body": "During the internship I grew into the role of “the one who asks why”. Not accepting everything because “that is just how it is done”, but continually looking for logic, simplicity and better ways to make people productive.",
+
+        "footer.ey": "Experience at Ernst &amp; Young.",
+        "footer.rights": "All rights reserved."
+      },
+      nl: {
+        "meta.title": "Klaas de Jager — EY IT Risk",
+        "a11y.skip": "Direct naar inhoud",
+
+        "brand.title": "Klaas de Jager — EY IT Risk",
+        "nav.overview": "Overzicht",
+        "nav.work": "Werkzaamheden &amp; Onderzoek",
+        "nav.learned": "Wat ik heb geleerd",
+
+        "hero.title": "Mijn ervaring bij Ernst &amp; Young (EY)",
+        "hero.body1": "Zes maanden scriptiestage op de afdeling <strong>IT Risk</strong>, op het snijvlak van technologie, data en assurance. Technology Risk bij EY combineert IT, processen en finance. Voor mij als TBK-student was dit de ideale plek om te zien hoe je risico’s, processen en mensen samenbrengt in één verhaal voor de klant. Mijn rol: ondersteunen, observeren, doorvragen en dat gebruiken als input voor mijn onderzoek naar onboarding.",
+        "hero.body2": "Periode: kwartiel 3 &amp; 4 (2023/2024) · Locatie: EY Amsterdam, Technology Risk.",
+        "hero.back": "Terug naar homepage",
+
+        "work.title": "Wat ik deed bij IT Risk",
+        "work.card1.title": "Dagelijkse ondersteuning in audits",
+        "work.card1.body": "Meedraaien in de <strong>day-to-day werkzaamheden</strong> van IT Risk: controleren van data, voorbereiden en nalopen van bestanden, checken of documentatie en evidence aansluiten op EY-procedures en het werk van de auditteams. Praktisch, detailgericht en sterk procesgedreven.",
+        "work.card2.title": "Werken in een Big Four-omgeving",
+        "work.card2.body": "Ervaren hoe planning, tools (zoals Atlas/Canvas) en strakke procedures samenkomen in grote assurancteams. Leren omgaan met piekdrukte, strakke deadlines en hybride werken, terwijl je kwaliteit en documentatie op niveau houdt.",
+        "work.card3.title": "Meekijken achter de schermen van onboarding",
+        "work.card3.body": "Omdat mijn scriptie over onboarding ging, had ik veel contact met HR, planning, managers en starters. Daardoor kreeg ik inzicht in <strong>hoe nieuwe IT Risk-medewerkers echt landen in de praktijk</strong> – los van hoe het proces op papier is ingericht.",
+
+        "cta.title": "“Hoe kan het onboardingproces worden geoptimaliseerd met als doel de productiviteit van nieuwe assurance-medewerkers te verbeteren?”",
+        "cta.li1": "Analyse van het bestaande onboardingproces",
+        "cta.li2": "Interviews met medewerkers om ervaringen op te halen",
+        "cta.li3": "Enquête uitgevoerd voor bredere input",
+        "cta.li4": "Vergelijkend onderzoek naar onboarding bij andere organisaties",
+        "cta.li5": "Theorie gebruikt om bevindingen te structureren",
+        "cta.li6": "Verbeterconcept ontworpen op basis van alle inzichten",
+
+        "learn.title": "Wat ik heb geleerd tijdens mijn tijd bij EY",
+        "learn.card1.title": "Onderzoek doen in een corporate omgeving",
+        "learn.card1.body": "Leren hoe je binnen een grote organisatie interviews regelt, mensen aan tafel krijgt en toch kritisch blijft. Balans vinden tussen diplomatiek communiceren en scherp zijn op data, aannames en conclusies.",
+        "learn.card2.title": "Van theorie naar concrete verbeteringen",
+        "learn.card2.body": "Modellen als ADKAR, Social Learning en de vier C’s van onboarding gebruiken om echte problemen te duiden: wachttijden, informatiegaten, onboarding die te theoretisch is en niet genoeg meeloopt met de praktijk op de werkvloer.",
+        "learn.card3.title": "Hybride werken &amp; eigen verantwoordelijkheid",
+        "learn.card3.body": "In een hybride omgeving moet je zelf actief vragen stellen, afspraken plannen en feedback ophalen. Ik leerde proactief te zijn: niet wachten tot iemand iets uitlegt, maar zelf de structuur maken en mensen benaderen.",
+        "learn.card4.title": "Omgaan met complexiteit",
+        "learn.card4.body": "EY is groot, de processen zijn complex en de onboarding raakt HR, IT, planning en de business. Ik leerde die complexiteit terug te brengen tot een helder verhaal met concrete keuzes en scenario’s.",
+        "learn.card5.title": "Werken met data én mensen",
+        "learn.card5.body": "Combinatie van enquêteresultaten, interviewquotes en procesbeschrijvingen. Data gebruiken om een punt te maken, maar altijd gekoppeld aan verhalen en ervaringen van de mensen die in het proces werken.",
+        "learn.card6.title": "Mijn rol als kritische sparringpartner",
+        "learn.card6.body": "Tijdens de stage groeide ik in de rol van “degene die de waarom-vraag stelt”. Niet alles accepteren omdat “het nou eenmaal zo gaat”, maar steeds zoeken naar logica, eenvoud en betere manieren om mensen productief te maken.",
+
+        "footer.ey": "Ervaring bij Ernst &amp; Young.",
+        "footer.rights": "Alle rechten voorbehouden."
+      }
+    };
+
+    // ---------- LANGUAGE ----------
+    function applyLang(lang){
+      const dict = i18n[lang] || i18n.en;
+      document.documentElement.lang = lang;
+      localStorage.setItem("lang", lang);
+
+      // titel
+      if (dict["meta.title"]) {
+        document.title = dict["meta.title"];
+      }
+
+      document.querySelectorAll("[data-i18n]").forEach(el=>{
+        const key = el.getAttribute("data-i18n");
+        const val = dict[key];
+        if(!val) return;
+
+        if(
+          (el.tagName === "INPUT" || el.tagName === "TEXTAREA") &&
+          el.hasAttribute("placeholder")
+        ){
+          el.placeholder = val;
+        }else{
+          el.innerHTML = val;
+        }
+      });
+
+      document.querySelectorAll(".lang-switch a").forEach(a=>{
+        a.classList.toggle("active", a.dataset.lang === lang);
+      });
+    }
+
+    const savedLang = localStorage.getItem("lang");
+    const fallbackLang = (navigator.language||"en").toLowerCase().startsWith("nl") ? "nl" : "en";
+    applyLang(savedLang || fallbackLang || "en");
+
+    document.querySelectorAll(".lang-switch a").forEach(a=>{
+      a.addEventListener("click", e=>{
+        e.preventDefault();
+        applyLang(a.dataset.lang);
+      });
+    });
+  </script>
+</body>
+</html>
