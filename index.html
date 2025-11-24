@@ -418,6 +418,30 @@
         to{opacity:1;transform:translateY(0)}
       }
     }
+
+@media (max-width:640px){
+  nav{
+    grid-template-columns:1fr;   /* alles onder elkaar */
+    row-gap:8px;
+  }
+
+  .nav-links{
+    justify-self:flex-start;
+    flex-wrap:wrap;              /* links mogen afbreken */
+    gap:12px;
+  }
+
+  .lang-switch{
+    justify-self:flex-start;
+  }
+
+  header .container{
+    padding-inline:16px;         /* iets minder zij-padding */
+  }
+}
+
+
+    
   </style>
 </head>
 <body>
