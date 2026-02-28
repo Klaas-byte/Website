@@ -7,17 +7,23 @@
   <style>
     body { margin: 0; display: grid; place-items: center; height: 100vh; background: #111; }
     canvas { background: #F6F7FB; border-radius: 12px; }
-    .overlay {
+    .overlay{
       position:absolute; inset:0; display:none; align-items:center; justify-content:center;
       flex-direction:column; gap:12px; color:#fff; font-family: system-ui, Arial;
     }
     .wrap { position: relative; }
     button { padding: 10px 14px; font-weight: 700; cursor: pointer; }
+    .hint{
+      position:absolute; left:10px; top:10px; font: 12px system-ui, Arial; color:#111;
+      background: rgba(255,255,255,.7); padding:6px 8px; border-radius: 10px;
+      user-select:none; pointer-events:none;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <canvas id="c" width="420" height="640"></canvas>
+    <div class="hint" id="hint"></div>
     <div id="ov" class="overlay">
       <div style="font-size:28px;font-weight:800;">GAME OVER</div>
       <div id="scoreText" style="font-size:18px;"></div>
@@ -32,12 +38,14 @@
   const ov = document.getElementById("ov");
   const scoreText = document.getElementById("scoreText");
   const again = document.getElementById("again");
+  const hint = document.getElementById("hint");
 
   const W = canvas.width, H = canvas.height;
-  const FPS = 60, DT = 1 / FPS;
+  const DT = 1/60;
 
   const GRAVITY = 1800;
   const JUMP_VY = -700;
+  const DOUBLE_JUMP_VY = -820;     // iets sterker
   const MOVE_SPEED = 320;
   const SCROLL_LINE = H * 0.40;
 
@@ -46,56 +54,136 @@
 
   const PLAYER_W = 26, PLAYER_H = 30;
 
+  // Double-jump: 1x per 45s, activeer met "Shift" (of "E") tijdens de sprong
+  const DOUBLE_CD = 45.0; // seconds
+  const DOUBLE_WINDOW_VY = 900; // veiligheidslimiet
+  const DOUBLE_USE_KEYS = new Set(["Shift", "e", "E"]);
+
+  // Obstacles (vogels) spawn kans + parameters
+  const BIRD_MIN_INTERVAL = 3.5;    // seconds (min tijd tussen spawns)
+  const BIRD_MAX_INTERVAL = 8.5;    // seconds
+  const BIRD_SPEED_MIN = 160;
+  const BIRD_SPEED_MAX = 260;
+  const BIRD_W = 34, BIRD_H = 18;
+
   const keys = new Set();
   window.addEventListener("keydown", (e) => {
     keys.add(e.key);
+    // voorkom dat spatie scrollt
+    if (e.key === " " || e.key === "ArrowUp" || e.key === "ArrowDown") e.preventDefault();
     if (gameOver && (e.key === "Enter" || e.key === " ")) reset();
-  });
+  }, { passive: false });
+
   window.addEventListener("keyup", (e) => keys.delete(e.key));
 
+  function rand(a,b){ return Math.random()*(b-a) + a; }
   function randInt(a,b){ return (Math.random()*(b-a+1) + a) | 0; }
 
-  let px, py, vx, vy, platforms, cameraY, score, gameOver;
+  let px, py, vx, vy;
+  let platforms, cameraY, score, gameOver;
+
+  // double-jump state
+  let doubleReadyAt = 0;     // timestamp in seconds
+  let doubleAvailable = true;
+  let usedDoubleThisAir = false;
+  let prevDoubleKeyDown = false;
+
+  // obstacles
+  let birds;
+  let nextBirdAt = 0;        // timestamp in seconds
+
+  // timing
+  let t = 0; // seconds since start
 
   function addPlatform(cx, cy) {
     platforms.push({ x: cx - PLATFORM_W/2, y: cy - PLATFORM_H/2, w: PLATFORM_W, h: PLATFORM_H });
   }
 
+  function spawnBird() {
+    // Spawn vanaf links of rechts
+    const fromLeft = Math.random() < 0.5;
+    const y = rand(H*0.18, H*0.72);
+    const speed = rand(BIRD_SPEED_MIN, BIRD_SPEED_MAX) * (fromLeft ? 1 : -1);
+    const x = fromLeft ? -BIRD_W : (W + BIRD_W);
+    birds.push({ x, y, vx: speed, w: BIRD_W, h: BIRD_H });
+  }
+
+  function scheduleNextBird() {
+    nextBirdAt = t + rand(BIRD_MIN_INTERVAL, BIRD_MAX_INTERVAL);
+  }
+
   function reset() {
     ov.style.display = "none";
     gameOver = false;
+
     score = 0;
     cameraY = 0;
 
-    px = W/2; py = H*0.70;
+    // speler start
+    px = W/2; py = H*0.68;
     vx = 0; vy = -200;
 
+    // double jump reset
+    t = 0;
+    doubleReadyAt = 0;
+    doubleAvailable = true;
+    usedDoubleThisAir = false;
+    prevDoubleKeyDown = false;
+
+    // platforms reset
     platforms = [];
-    addPlatform(W/2, H*0.80);
-    let y = H*0.70;
+
+    // FIX: startplatform altijd haalbaar (recht onder speler + extra dichtbij)
+    addPlatform(px, py + 60);
+    addPlatform(clamp(px + rand(-60,60), PLATFORM_W/2, W-PLATFORM_W/2), py - 10);
+
+    // rest omhoog genereren (relatief kleine gap zodat je nooit “onmogelijk” start)
+    let y = py - 40;
     for (let i=0;i<10;i++){
       y -= randInt(GAP_MIN, GAP_MAX);
       addPlatform(randInt(PLATFORM_W/2, W-PLATFORM_W/2), y);
     }
+
+    // obstacles reset
+    birds = [];
+    scheduleNextBird();
+
+    // hint
+    updateHint();
   }
+
+  function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
 
   function wrapX() {
     if (px < -PLAYER_W/2) px = W + PLAYER_W/2;
     else if (px > W + PLAYER_W/2) px = -PLAYER_W/2;
   }
 
-  function checkCollisions(oldPy) {
+  function aabb(ax, ay, aw, ah, bx, by, bw, bh) {
+    return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+  }
+
+  function playerRect() {
+    return { x: px - PLAYER_W/2, y: py - PLAYER_H/2, w: PLAYER_W, h: PLAYER_H };
+  }
+
+  function checkPlatformCollisions(oldPy) {
     if (vy <= 0) return;
-    const px0 = px - PLAYER_W/2, px1 = px + PLAYER_W/2;
-    const py1 = py + PLAYER_H/2;
+    const pr = playerRect();
+    const py1 = pr.y + pr.h;
     const oldPy1 = oldPy + PLAYER_H/2;
 
     for (const p of platforms) {
       const x0 = p.x, x1 = p.x + p.w, y0 = p.y, y1 = p.y + p.h;
-      if (px1 <= x0 || px0 >= x1) continue;
+      if (pr.x + pr.w <= x0 || pr.x >= x1) continue;
+
+      // speler kruist de bovenkant
       if (oldPy1 <= y0 && py1 >= y0 && py1 <= y1 + 8) {
         py = y0 - PLAYER_H/2;
         vy = JUMP_VY;
+
+        // reset “in-air” dubbeljump wanneer je landt
+        usedDoubleThisAir = false;
         break;
       }
     }
@@ -111,39 +199,116 @@
     }
   }
 
-  function endGame() {
+  function endGame(reason) {
     gameOver = true;
-    scoreText.textContent = `Score: ${score}`;
+    scoreText.textContent = `Score: ${score}` + (reason ? ` — ${reason}` : "");
     ov.style.display = "flex";
   }
 
   again.addEventListener("click", reset);
 
+  function updateHint() {
+    const cdLeft = Math.max(0, doubleReadyAt - t);
+    const ready = cdLeft <= 0;
+    hint.textContent = `Score: ${score} | Double jump: ${ready ? "READY (Shift/E)" : `${cdLeft.toFixed(0)}s`}`;
+  }
+
+  function tryDoubleJump() {
+    // Edge-trigger: alleen op “net ingedrukt”
+    const downNow = [...DOUBLE_USE_KEYS].some(k => keys.has(k));
+    const pressed = downNow && !prevDoubleKeyDown;
+    prevDoubleKeyDown = downNow;
+
+    if (!pressed) return;
+    if (gameOver) return;
+
+    // voorwaarden:
+    // - cooldown voorbij
+    // - nog niet gebruikt tijdens deze sprong
+    // - alleen wanneer je in de lucht bent (niet net op platform)
+    // - als je al extreem hard valt: alsnog toestaan, maar cap (veiligheid)
+    if (t < doubleReadyAt) return;
+    if (usedDoubleThisAir) return;
+
+    // “in-air” detectie: als je niet op platform staat (we gebruiken simpel: vy != JUMP_VY en py niet exact op platform)
+    // Hier: sta toe zolang speler niet net exact op platform staat; praktisch: altijd behalve op landingsframe.
+    usedDoubleThisAir = true;
+    doubleReadyAt = t + DOUBLE_CD;
+
+    // geef boost
+    vy = Math.min(vy, DOUBLE_WINDOW_VY);
+    vy = DOUBLE_JUMP_VY;
+  }
+
+  function updateBirds() {
+    // spawn
+    if (t >= nextBirdAt) {
+      // niet elke keer: soms geen hindernis (anders te irritant)
+      if (Math.random() < 0.75) spawnBird();
+      scheduleNextBird();
+    }
+
+    // move
+    for (const b of birds) {
+      b.x += b.vx * DT;
+    }
+
+    // remove offscreen
+    birds = birds.filter(b => b.x > -BIRD_W*2 && b.x < W + BIRD_W*2);
+
+    // collision
+    const pr = playerRect();
+    for (const b of birds) {
+      const bx = b.x - b.w/2, by = b.y - b.h/2;
+      if (aabb(pr.x, pr.y, pr.w, pr.h, bx, by, b.w, b.h)) {
+        endGame("geraakt door vogel");
+        break;
+      }
+    }
+  }
+
   function update() {
     if (gameOver) return;
+
+    t += DT;
 
     const left = keys.has("ArrowLeft") || keys.has("a") || keys.has("A");
     const right = keys.has("ArrowRight") || keys.has("d") || keys.has("D");
     vx = left && !right ? -MOVE_SPEED : right && !left ? MOVE_SPEED : 0;
 
+    // double-jump input check (moet vóór physics, zodat het meteen effect heeft)
+    tryDoubleJump();
+
+    // physics
     vy += GRAVITY * DT;
     const oldPy = py;
+
     px += vx * DT;
     py += vy * DT;
 
     wrapX();
-    checkCollisions(oldPy);
+    checkPlatformCollisions(oldPy);
 
+    // camera scroll
     if (py < SCROLL_LINE) {
       const dy = SCROLL_LINE - py;
       py = SCROLL_LINE;
       cameraY += dy;
+
       for (const p of platforms) p.y += dy;
+      for (const b of birds) b.y += dy; // obstacles scrollen mee (blijven “in de wereld”)
+
       score = Math.max(score, cameraY | 0);
       recyclePlatforms();
     }
 
-    if (py - PLAYER_H/2 > H) endGame();
+    // obstacles update
+    updateBirds();
+
+    // game over: vallen onder scherm
+    if (!gameOver && py - PLAYER_H/2 > H) endGame("gevallen");
+
+    updateHint();
   }
 
   function draw() {
@@ -155,6 +320,28 @@
       ctx.fillRect(p.x, p.y, p.w, p.h);
       ctx.strokeStyle = "#1E9E52";
       ctx.strokeRect(p.x, p.y, p.w, p.h);
+    }
+
+    // birds (hindernissen)
+    for (const b of birds) {
+      const x = b.x, y = b.y;
+      // simpel vogeltje: body + vleugel
+      ctx.fillStyle = "#444";
+      ctx.beginPath();
+      ctx.ellipse(x, y, b.w/2, b.h/2, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#222";
+      ctx.beginPath();
+      ctx.ellipse(x + (b.vx>0 ? -6 : 6), y-4, 10, 6, 0.4, 0, Math.PI*2);
+      ctx.fill();
+      // snavel
+      ctx.fillStyle = "#C58A2B";
+      ctx.beginPath();
+      ctx.moveTo(x + (b.vx>0 ? b.w/2 : -b.w/2), y);
+      ctx.lineTo(x + (b.vx>0 ? b.w/2 + 10 : -b.w/2 - 10), y-3);
+      ctx.lineTo(x + (b.vx>0 ? b.w/2 + 10 : -b.w/2 - 10), y+3);
+      ctx.closePath();
+      ctx.fill();
     }
 
     // player
@@ -169,11 +356,6 @@
     ctx.fillStyle = "white";
     ctx.beginPath(); ctx.ellipse(px-4, py-4, 2, 2, 0, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.ellipse(px+4, py-4, 2, 2, 0, 0, Math.PI*2); ctx.fill();
-
-    // score
-    ctx.fillStyle = "#111";
-    ctx.font = "bold 14px system-ui, Arial";
-    ctx.fillText(`Score: ${score}`, 10, 20);
   }
 
   function loop() {
