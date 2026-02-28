@@ -32,7 +32,7 @@
       letter-spacing:0.3px;
     }
     p{
-      margin:0 0 20px 0;
+      margin:0 0 24px 0;
       color:#cbd5f5;
       font-size:clamp(16px,2vw,18px);
     }
@@ -46,8 +46,27 @@
       color:#93c5fd;
       margin-bottom:18px;
     }
+    .btn{
+      display:inline-block;
+      padding:12px 22px;
+      border-radius:999px;
+      background:#38bdf8;
+      color:#0b1220;
+      font-weight:600;
+      text-decoration:none;
+      transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+      box-shadow:0 10px 20px rgba(56,189,248,0.35);
+    }
+    .btn:hover{
+      transform:translateY(-2px);
+      box-shadow:0 14px 28px rgba(56,189,248,0.45);
+      background:#60a5fa;
+    }
+    .btn:active{
+      transform:translateY(0);
+    }
     .footer{
-      margin-top:24px;
+      margin-top:28px;
       font-size:0.85rem;
       color:#64748b;
     }
@@ -60,18 +79,13 @@
     <p>
       This page is currently being updated.<br>
       Please check back later.
-      
     </p>
-    <div class="footer">
 
-<a class="btn" href="index.html" aria-label="Terug naar de homepage" data-i18n="hero.back">
-              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M15 18l-6-6 6-6"/>
-                <path d="M21 12H9"/>
-              </svg>
-              Terug naar homepage
-            </a>
-      
+    <!-- Change index.html to your actual homepage file if needed -->
+    <a href="index.html" class="btn">Back to Home Page</a>
+
+    <div class="footer">
+      © 2026 Klaas de Jager — All rights reserved.
     </div>
   </div>
 </body>
