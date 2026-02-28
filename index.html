@@ -320,10 +320,10 @@
       <nav aria-label="Hoofdnavigatie">
         <div class="brand">Klaas de Jager</div>
 
-        <div class="nav-links" role="menubar">
-          <a role="menuitem" href="#features" data-i18n="nav.features">Achtergrond</a>
-          <a role="menuitem" href="#cases" data-i18n="nav.cases">Ervaring</a>
-          <a role="menuitem" href="#contact" data-i18n="nav.contact">Contact</a>
+        <div class="nav-links">
+          <a href="#features" data-i18n="nav.features">Achtergrond</a>
+          <a href="#cases" data-i18n="nav.cases">Ervaring</a>
+          <a href="#contact" data-i18n="nav.contact">Contact</a>
         </div>
 
         <div class="lang-switch" aria-label="Taal kiezen">
@@ -331,8 +331,6 @@
           <a href="#" data-lang="en" aria-label="English">🇬🇧</a>
           <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle theme">🌙</button>
         </div>
-
-        
       </nav>
     </div>
   </header>
@@ -350,9 +348,9 @@
       </div>
     </section>
 
-    <!-- Achtergrond (alleen focus-blokken, zoals jij wilde) -->
     <section id="features" class="container" aria-labelledby="features-title">
       <h2 id="features-title" data-i18n="features.title">Achtergrond</h2>
+
       <div class="focus-grid">
         <article class="focus-card" aria-labelledby="f-ops">
           <h3 id="f-ops" data-i18n="focus.ops.title">Operations & procesverbetering</h3>
@@ -411,24 +409,21 @@
           <p data-i18n="cases.four.body">Procesoptimalisatie, gastenervaring en operationele performance.</p>
         </a>
 
-
-                <a href="Hva.html" class="case">
-          <img src="Images/hak.jpg" alt="Dashboard voor asset- en fleetmanagement">
-          <h3 data-i18n="cases.three.title">Hogeschool van Amsterdam</h3>
-          <p data-i18n="cases.three.body">
+        <a href="Hva.html" class="case">
+          <img src="Images/hva.jpg" alt="Studieomgeving of campusbeeld">
+          <h3 data-i18n="cases.five.title">Hogeschool van Amsterdam</h3>
+          <p data-i18n="cases.five.body">
             Bachelor Engineering: Technische bedrijfskunde. Het combineren van techniek, operations en management om complexe bedrijfsprocessen te verbeteren.
           </p>
-        </a>        
-        
-                <a href="Nyenrode.html" class="case">
-          <img src="Images/hak.jpg" alt="Dashboard voor asset- en fleetmanagement">
-          <h3 data-i18n="cases.three.title">Nyenrode</h3>
-          <p data-i18n="cases.three.body">
+        </a>
+
+        <a href="Nyenrode.html" class="case">
+          <img src="Images/nyenrode.jpg" alt="Nyenrode of studieomgeving">
+          <h3 data-i18n="cases.six.title">Nyenrode</h3>
+          <p data-i18n="cases.six.body">
             Pre-Masterprogramma en Master of Science (MSc) in Management
           </p>
-        </a>       
-
-  
+        </a>
       </div>
     </section>
 
@@ -440,17 +435,17 @@
 
       <div class="contact-grid">
         <a href="mailto:Klaas.dejager10@gmail.com" class="contact-card">
-          <h2 data-i18n="contact.email.title">E-mail</h2>
+          <h3 data-i18n="contact.email.title">E-mail</h3>
           <p data-i18n="contact.email.body">Klaas.dejager10@gmail.com</p>
         </a>
 
         <a href="https://nl.linkedin.com/in/klaas-de-jager" target="_blank" rel="noreferrer" class="contact-card">
-          <h2 data-i18n="contact.linkedin.title">LinkedIn</h2>
+          <h3 data-i18n="contact.linkedin.title">LinkedIn</h3>
           <p data-i18n="contact.linkedin.body">Bekijk mijn profiel en netwerk.</p>
         </a>
 
         <a href="https://calendly.com/klaas-dejager10/30min" target="_blank" rel="noreferrer" class="contact-card">
-          <h2 data-i18n="contact.call.title">Plan een gesprek</h2>
+          <h3 data-i18n="contact.call.title">Plan een gesprek</h3>
           <p data-i18n="contact.call.body">Boek direct een online kennismaking van 30 minuten.</p>
         </a>
       </div>
@@ -484,7 +479,6 @@
         "cta.start": "Get in touch",
 
         "features.title": "Background",
-        "features.intro": "Three areas I focus on. Short and concrete.",
         "focus.ops.title": "Operations & process improvement",
         "focus.ops.body": "Analyze processes, make bottlenecks visible, and simplify where possible. From structure to measurable improvement.",
         "focus.fin.title": "Finance focus",
@@ -501,6 +495,10 @@
         "cases.three.body": "Coordinated schedules, discussed bottlenecks, and clarified information. I was the link between the office and the field crews.",
         "cases.four.title": "Hospitality role at Tuindiners",
         "cases.four.body": "Process optimization, guest experience, and operational performance.",
+        "cases.five.title": "Amsterdam University of Applied Sciences",
+        "cases.five.body": "BSc Engineering: Industrial Engineering & Management. Combining technology, operations, and management to improve complex business processes.",
+        "cases.six.title": "Nyenrode",
+        "cases.six.body": "Pre-Master program and Master of Science (MSc) in Management.",
 
         "contact.title": "Get in touch",
         "contact.intro": "Want to know more, spar about an idea, or just get acquainted? Pick the channel that suits you best.",
@@ -526,7 +524,6 @@
         "cta.start": "Neem contact op!",
 
         "features.title": "Achtergrond",
-        "features.intro": "Drie gebieden waar ik me op richt. Kort en concreet.",
         "focus.ops.title": "Operations & procesverbetering",
         "focus.ops.body": "Processen analyseren, knelpunten zichtbaar maken en versimpelen waar mogelijk. Van structuur naar meetbare verbetering.",
         "focus.fin.title": "Finance focus",
@@ -543,6 +540,10 @@
         "cases.three.body": "Planningen afstemmen, knelpunten bespreken en informatie verduidelijken. Ik was de schakel tussen het kantoor en de ploegen buiten.",
         "cases.four.title": "Horecamedewerker bij Tuindiners",
         "cases.four.body": "Procesoptimalisatie, gastenervaring en operationele performance.",
+        "cases.five.title": "Hogeschool van Amsterdam",
+        "cases.five.body": "Bachelor Engineering: Technische bedrijfskunde. Het combineren van techniek, operations en management om complexe bedrijfsprocessen te verbeteren.",
+        "cases.six.title": "Nyenrode",
+        "cases.six.body": "Pre-Masterprogramma en Master of Science (MSc) in Management",
 
         "contact.title": "Neem contact op",
         "contact.intro": "Wil je meer weten, sparren of gewoon even kennismaken? Kies het kanaal dat het beste bij je past.",
@@ -561,11 +562,9 @@
     function applyLang(lang){
       const dict = i18n[lang] || i18n.en;
 
-      // set <html lang="">
       document.documentElement.lang = lang;
       localStorage.setItem("lang", lang);
 
-      // update <title> tag textContent (tab title)
       const titleTag = document.querySelector("title[data-i18n='meta.title']");
       if(titleTag && dict["meta.title"]) titleTag.textContent = dict["meta.title"];
 
@@ -582,7 +581,7 @@
         }
       });
 
-      document.querySelectorAll(".lang-switch a").forEach(a=>{
+      document.querySelectorAll(".lang-switch a[data-lang]").forEach(a=>{
         a.classList.toggle("active", a.dataset.lang === lang);
       });
     }
@@ -591,7 +590,7 @@
     const fallbackLang = (navigator.language || "en").toLowerCase().startsWith("nl") ? "nl" : "en";
     applyLang(savedLang || fallbackLang || "en");
 
-    document.querySelectorAll(".lang-switch a").forEach(a=>{
+    document.querySelectorAll(".lang-switch a[data-lang]").forEach(a=>{
       a.addEventListener("click", e=>{
         e.preventDefault();
         applyLang(a.dataset.lang);
@@ -631,11 +630,20 @@
       applyTheme(current === "dark" ? "light" : "dark");
     });
 
-    // ---------- SMOOTH SCROLL WITH OFFSET ----------
+    // ---------- SMOOTH SCROLL WITH OFFSET (FIX: skip href="#" and invalid selectors) ----------
     document.querySelectorAll('a[href^="#"]').forEach(anchor=>{
       anchor.addEventListener("click", function(e){
         const href = this.getAttribute("href");
-        const target = href ? document.querySelector(href) : null;
+
+        // FIX: ignore pure "#"
+        if(!href || href === "#") return;
+
+        let target = null;
+        try{
+          target = document.querySelector(href);
+        }catch(_){
+          return; // invalid selector, do nothing
+        }
         if(!target) return;
 
         e.preventDefault();
