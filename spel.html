@@ -1,206 +1,190 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!doctype html>
+<html lang="nl">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2575.7">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Doodle Jump Mini</title>
+  <style>
+    body { margin: 0; display: grid; place-items: center; height: 100vh; background: #111; }
+    canvas { background: #F6F7FB; border-radius: 12px; }
+    .overlay {
+      position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+      flex-direction:column; gap:12px; color:#fff; font-family: system-ui, Arial;
+    }
+    .wrap { position: relative; }
+    button { padding: 10px 14px; font-weight: 700; cursor: pointer; }
   </style>
 </head>
 <body>
-<p class="p1">&lt;!doctype html&gt;</p>
-<p class="p1">&lt;html lang="nl"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="utf-8" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width,initial-scale=1" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;Doodle Jump Mini&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body { margin: 0; display: grid; place-items: center; height: 100vh; background: #111; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>canvas { background: #F6F7FB; border-radius: 12px; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.overlay {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>position:absolute; inset:0; display:none; align-items:center; justify-content:center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>flex-direction:column; gap:12px; color:#fff; font-family: system-ui, Arial;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.wrap { position: relative; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>button { padding: 10px 14px; font-weight: 700; cursor: pointer; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="wrap"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;canvas id="c" width="420" height="640"&gt;&lt;/canvas&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="ov" class="overlay"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div style="font-size:28px;font-weight:800;"&gt;GAME OVER&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div id="scoreText" style="font-size:18px;"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;button id="again"&gt;Try Again&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;script&gt;</p>
-<p class="p1">(() =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const canvas = document.getElementById("c");</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const ctx = canvas.getContext("2d");</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const ov = document.getElementById("ov");</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const scoreText = document.getElementById("scoreText");</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const again = document.getElementById("again");</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>const W = canvas.width, H = canvas.height;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const FPS = 60, DT = 1 / FPS;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>const GRAVITY = 1800;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const JUMP_VY = -700;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const MOVE_SPEED = 320;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const SCROLL_LINE = H * 0.40;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>const PLATFORM_W = 70, PLATFORM_H = 12;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const GAP_MIN = 55, GAP_MAX = 95;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>const PLAYER_W = 26, PLAYER_H = 30;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>const keys = new Set();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>window.addEventListener("keydown", (e) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>keys.add(e.key);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (gameOver &amp;&amp; (e.key === "Enter" || e.key === " ")) reset();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>});</p>
-<p class="p1"><span class="Apple-converted-space">  </span>window.addEventListener("keyup", (e) =&gt; keys.delete(e.key));</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>function randInt(a,b){ return (Math.random()*(b-a+1) + a) | 0; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>let px, py, vx, vy, platforms, cameraY, score, gameOver;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>function addPlatform(cx, cy) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>platforms.push({ x: cx - PLATFORM_W/2, y: cy - PLATFORM_H/2, w: PLATFORM_W, h: PLATFORM_H });</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>function reset() {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>ov.style.display = "none";</p>
-<p class="p1"><span class="Apple-converted-space">    </span>gameOver = false;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>score = 0;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>cameraY = 0;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>px = W/2; py = H*0.70;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>vx = 0; vy = -200;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>platforms = [];</p>
-<p class="p1"><span class="Apple-converted-space">    </span>addPlatform(W/2, H*0.80);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let y = H*0.70;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>for (let i=0;i&lt;10;i++){</p>
-<p class="p1"><span class="Apple-converted-space">      </span>y -= randInt(GAP_MIN, GAP_MAX);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>addPlatform(randInt(PLATFORM_W/2, W-PLATFORM_W/2), y);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>function wrapX() {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (px &lt; -PLAYER_W/2) px = W + PLAYER_W/2;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>else if (px &gt; W + PLAYER_W/2) px = -PLAYER_W/2;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>function checkCollisions(oldPy) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (vy &lt;= 0) return;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const px0 = px - PLAYER_W/2, px1 = px + PLAYER_W/2;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const py1 = py + PLAYER_H/2;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const oldPy1 = oldPy + PLAYER_H/2;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>for (const p of platforms) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const x0 = p.x, x1 = p.x + p.w, y0 = p.y, y1 = p.y + p.h;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (px1 &lt;= x0 || px0 &gt;= x1) continue;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (oldPy1 &lt;= y0 &amp;&amp; py1 &gt;= y0 &amp;&amp; py1 &lt;= y1 + 8) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>py = y0 - PLAYER_H/2;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vy = JUMP_VY;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>break;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>function recyclePlatforms() {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>platforms = platforms.filter(p =&gt; p.y &lt; H + 80);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>while (platforms.length &lt; 12) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>let topY = platforms.reduce((m,p)=&gt;Math.min(m,p.y), H);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>let newY = topY - randInt(GAP_MIN, GAP_MAX);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>let newX = randInt(PLATFORM_W/2, W-PLATFORM_W/2);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>addPlatform(newX, newY);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>function endGame() {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>gameOver = true;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>scoreText.textContent = `Score: ${score}`;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>ov.style.display = "flex";</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>again.addEventListener("click", reset);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>function update() {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (gameOver) return;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>const left = keys.has("ArrowLeft") || keys.has("a") || keys.has("A");</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const right = keys.has("ArrowRight") || keys.has("d") || keys.has("D");</p>
-<p class="p1"><span class="Apple-converted-space">    </span>vx = left &amp;&amp; !right ? -MOVE_SPEED : right &amp;&amp; !left ? MOVE_SPEED : 0;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>vy += GRAVITY * DT;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const oldPy = py;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>px += vx * DT;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>py += vy * DT;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>wrapX();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>checkCollisions(oldPy);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (py &lt; SCROLL_LINE) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const dy = SCROLL_LINE - py;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>py = SCROLL_LINE;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>cameraY += dy;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>for (const p of platforms) p.y += dy;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>score = Math.max(score, cameraY | 0);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>recyclePlatforms();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (py - PLAYER_H/2 &gt; H) endGame();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>function draw() {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>ctx.clearRect(0,0,W,H);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// platforms</p>
-<p class="p1"><span class="Apple-converted-space">    </span>for (const p of platforms) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>ctx.fillStyle = "#2ECC71";</p>
-<p class="p1"><span class="Apple-converted-space">      </span>ctx.fillRect(p.x, p.y, p.w, p.h);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>ctx.strokeStyle = "#1E9E52";</p>
-<p class="p1"><span class="Apple-converted-space">      </span>ctx.strokeRect(p.x, p.y, p.w, p.h);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// player</p>
-<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillStyle = "#3498DB";</p>
-<p class="p1"><span class="Apple-converted-space">    </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>ctx.ellipse(px, py, PLAYER_W/2, PLAYER_H/2, 0, 0, Math.PI*2);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>ctx.fill();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>ctx.strokeStyle = "#1F6FA3";</p>
-<p class="p1"><span class="Apple-converted-space">    </span>ctx.stroke();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// eyes</p>
-<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillStyle = "white";</p>
-<p class="p1"><span class="Apple-converted-space">    </span>ctx.beginPath(); ctx.ellipse(px-4, py-4, 2, 2, 0, 0, Math.PI*2); ctx.fill();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>ctx.beginPath(); ctx.ellipse(px+4, py-4, 2, 2, 0, 0, Math.PI*2); ctx.fill();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// score</p>
-<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillStyle = "#111";</p>
-<p class="p1"><span class="Apple-converted-space">    </span>ctx.font = "bold 14px system-ui, Arial";</p>
-<p class="p1"><span class="Apple-converted-space">    </span>ctx.fillText(`Score: ${score}`, 10, 20);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>function loop() {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>update();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>draw();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>requestAnimationFrame(loop);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>reset();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>loop();</p>
-<p class="p1">})();</p>
-<p class="p1">&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+  <div class="wrap">
+    <canvas id="c" width="420" height="640"></canvas>
+    <div id="ov" class="overlay">
+      <div style="font-size:28px;font-weight:800;">GAME OVER</div>
+      <div id="scoreText" style="font-size:18px;"></div>
+      <button id="again">Try Again</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+  const ov = document.getElementById("ov");
+  const scoreText = document.getElementById("scoreText");
+  const again = document.getElementById("again");
+
+  const W = canvas.width, H = canvas.height;
+  const FPS = 60, DT = 1 / FPS;
+
+  const GRAVITY = 1800;
+  const JUMP_VY = -700;
+  const MOVE_SPEED = 320;
+  const SCROLL_LINE = H * 0.40;
+
+  const PLATFORM_W = 70, PLATFORM_H = 12;
+  const GAP_MIN = 55, GAP_MAX = 95;
+
+  const PLAYER_W = 26, PLAYER_H = 30;
+
+  const keys = new Set();
+  window.addEventListener("keydown", (e) => {
+    keys.add(e.key);
+    if (gameOver && (e.key === "Enter" || e.key === " ")) reset();
+  });
+  window.addEventListener("keyup", (e) => keys.delete(e.key));
+
+  function randInt(a,b){ return (Math.random()*(b-a+1) + a) | 0; }
+
+  let px, py, vx, vy, platforms, cameraY, score, gameOver;
+
+  function addPlatform(cx, cy) {
+    platforms.push({ x: cx - PLATFORM_W/2, y: cy - PLATFORM_H/2, w: PLATFORM_W, h: PLATFORM_H });
+  }
+
+  function reset() {
+    ov.style.display = "none";
+    gameOver = false;
+    score = 0;
+    cameraY = 0;
+
+    px = W/2; py = H*0.70;
+    vx = 0; vy = -200;
+
+    platforms = [];
+    addPlatform(W/2, H*0.80);
+    let y = H*0.70;
+    for (let i=0;i<10;i++){
+      y -= randInt(GAP_MIN, GAP_MAX);
+      addPlatform(randInt(PLATFORM_W/2, W-PLATFORM_W/2), y);
+    }
+  }
+
+  function wrapX() {
+    if (px < -PLAYER_W/2) px = W + PLAYER_W/2;
+    else if (px > W + PLAYER_W/2) px = -PLAYER_W/2;
+  }
+
+  function checkCollisions(oldPy) {
+    if (vy <= 0) return;
+    const px0 = px - PLAYER_W/2, px1 = px + PLAYER_W/2;
+    const py1 = py + PLAYER_H/2;
+    const oldPy1 = oldPy + PLAYER_H/2;
+
+    for (const p of platforms) {
+      const x0 = p.x, x1 = p.x + p.w, y0 = p.y, y1 = p.y + p.h;
+      if (px1 <= x0 || px0 >= x1) continue;
+      if (oldPy1 <= y0 && py1 >= y0 && py1 <= y1 + 8) {
+        py = y0 - PLAYER_H/2;
+        vy = JUMP_VY;
+        break;
+      }
+    }
+  }
+
+  function recyclePlatforms() {
+    platforms = platforms.filter(p => p.y < H + 80);
+    while (platforms.length < 12) {
+      let topY = platforms.reduce((m,p)=>Math.min(m,p.y), H);
+      let newY = topY - randInt(GAP_MIN, GAP_MAX);
+      let newX = randInt(PLATFORM_W/2, W-PLATFORM_W/2);
+      addPlatform(newX, newY);
+    }
+  }
+
+  function endGame() {
+    gameOver = true;
+    scoreText.textContent = `Score: ${score}`;
+    ov.style.display = "flex";
+  }
+
+  again.addEventListener("click", reset);
+
+  function update() {
+    if (gameOver) return;
+
+    const left = keys.has("ArrowLeft") || keys.has("a") || keys.has("A");
+    const right = keys.has("ArrowRight") || keys.has("d") || keys.has("D");
+    vx = left && !right ? -MOVE_SPEED : right && !left ? MOVE_SPEED : 0;
+
+    vy += GRAVITY * DT;
+    const oldPy = py;
+    px += vx * DT;
+    py += vy * DT;
+
+    wrapX();
+    checkCollisions(oldPy);
+
+    if (py < SCROLL_LINE) {
+      const dy = SCROLL_LINE - py;
+      py = SCROLL_LINE;
+      cameraY += dy;
+      for (const p of platforms) p.y += dy;
+      score = Math.max(score, cameraY | 0);
+      recyclePlatforms();
+    }
+
+    if (py - PLAYER_H/2 > H) endGame();
+  }
+
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+
+    // platforms
+    for (const p of platforms) {
+      ctx.fillStyle = "#2ECC71";
+      ctx.fillRect(p.x, p.y, p.w, p.h);
+      ctx.strokeStyle = "#1E9E52";
+      ctx.strokeRect(p.x, p.y, p.w, p.h);
+    }
+
+    // player
+    ctx.fillStyle = "#3498DB";
+    ctx.beginPath();
+    ctx.ellipse(px, py, PLAYER_W/2, PLAYER_H/2, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = "#1F6FA3";
+    ctx.stroke();
+
+    // eyes
+    ctx.fillStyle = "white";
+    ctx.beginPath(); ctx.ellipse(px-4, py-4, 2, 2, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(px+4, py-4, 2, 2, 0, 0, Math.PI*2); ctx.fill();
+
+    // score
+    ctx.fillStyle = "#111";
+    ctx.font = "bold 14px system-ui, Arial";
+    ctx.fillText(`Score: ${score}`, 10, 20);
+  }
+
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  reset();
+  loop();
+})();
+</script>
 </body>
 </html>
