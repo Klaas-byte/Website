@@ -3,31 +3,45 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Doodle Jump Mini</title>
+  <title>Tank Battle 1v1</title>
   <style>
-    body { margin: 0; display: grid; place-items: center; height: 100vh; background: #111; }
-    canvas { background: #F6F7FB; border-radius: 12px; }
+    body { margin: 0; display: grid; place-items: center; height: 100vh; background: #111; font-family: system-ui, Arial; }
+    canvas { background: #2a3d2a; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+    .wrap { position: relative; }
     .overlay{
       position:absolute; inset:0; display:none; align-items:center; justify-content:center;
-      flex-direction:column; gap:12px; color:#fff; font-family: system-ui, Arial;
+      flex-direction:column; gap:12px; color:#fff;
+      background: rgba(0,0,0,.55); border-radius: 12px;
     }
-    .wrap { position: relative; }
-    button { padding: 10px 14px; font-weight: 700; cursor: pointer; }
-    .hint{
-      position:absolute; left:10px; top:10px; font: 12px system-ui, Arial; color:#111;
-      background: rgba(255,255,255,.7); padding:6px 8px; border-radius: 10px;
-      user-select:none; pointer-events:none;
+    .overlay.show { display:flex; }
+    button { padding: 10px 18px; font-weight: 700; cursor: pointer; border:0; border-radius:8px; background:#3498DB; color:#fff; font-size:14px; }
+    button:hover { background:#2980B9; }
+    .hud{
+      position:absolute; left:0; right:0; top:10px; display:flex; justify-content:space-between;
+      padding: 0 14px; font: 13px system-ui, Arial; color:#fff; pointer-events:none;
+      text-shadow: 0 1px 2px rgba(0,0,0,.6);
+    }
+    .player { background: rgba(0,0,0,.35); padding:6px 10px; border-radius:8px; }
+    .p1 { border-left: 4px solid #3498DB; }
+    .p2 { border-left: 4px solid #E74C3C; }
+    .controls {
+      position:absolute; left:0; right:0; bottom:8px; text-align:center;
+      font: 11px system-ui, Arial; color: rgba(255,255,255,.7);
+      pointer-events:none; text-shadow: 0 1px 2px rgba(0,0,0,.6);
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <canvas id="c" width="420" height="640"></canvas>
-    <div class="hint" id="hint"></div>
+    <canvas id="c" width="900" height="600"></canvas>
+    <div class="hud">
+      <div class="player p1" id="hud1">P1 (WASD + Space) ❤❤❤</div>
+      <div class="player p2" id="hud2">P2 (Arrows + Enter) ❤❤❤</div>
+    </div>
+    <div class="controls">P1: WASD bewegen, SPACE schieten &nbsp;|&nbsp; P2: Pijltjes bewegen, ENTER schieten</div>
     <div id="ov" class="overlay">
-      <div style="font-size:28px;font-weight:800;">GAME OVER</div>
-      <div id="scoreText" style="font-size:18px;"></div>
-      <button id="again">Try Again</button>
+      <div id="winText" style="font-size:32px;font-weight:800;"></div>
+      <button id="again">Play Again</button>
     </div>
   </div>
 
@@ -36,326 +50,428 @@
   const canvas = document.getElementById("c");
   const ctx = canvas.getContext("2d");
   const ov = document.getElementById("ov");
-  const scoreText = document.getElementById("scoreText");
+  const winText = document.getElementById("winText");
   const again = document.getElementById("again");
-  const hint = document.getElementById("hint");
+  const hud1 = document.getElementById("hud1");
+  const hud2 = document.getElementById("hud2");
 
   const W = canvas.width, H = canvas.height;
   const DT = 1/60;
 
-  const GRAVITY = 1800;
-  const JUMP_VY = -700;
-  const DOUBLE_JUMP_VY = -820;     // iets sterker
-  const MOVE_SPEED = 320;
-  const SCROLL_LINE = H * 0.40;
-
-  const PLATFORM_W = 70, PLATFORM_H = 12;
-  const GAP_MIN = 55, GAP_MAX = 95;
-
-  const PLAYER_W = 26, PLAYER_H = 30;
-
-  // Double-jump: 1x per 45s, activeer met "Shift" (of "E") tijdens de sprong
-  const DOUBLE_CD = 0.10; // seconds
-  const DOUBLE_WINDOW_VY = 900; // veiligheidslimiet
-  const DOUBLE_USE_KEYS = new Set(["Shift", "e", "E"]);
-
-  // Obstacles (vogels) spawn kans + parameters
-  const BIRD_MIN_INTERVAL = 3.5;    // seconds (min tijd tussen spawns)
-  const BIRD_MAX_INTERVAL = 8.5;    // seconds
-  const BIRD_SPEED_MIN = 160;
-  const BIRD_SPEED_MAX = 260;
-  const BIRD_W = 34, BIRD_H = 18;
+  // Tank settings
+  const TANK_SIZE = 28;
+  const TANK_SPEED = 140;
+  const TANK_ROT_SPEED = 3.2;          // radians/sec
+  const BULLET_SPEED = 360;
+  const BULLET_R = 4;
+  const BULLET_LIFE = 3.0;             // seconds
+  const BULLET_MAX_BOUNCES = 1;
+  const FIRE_COOLDOWN = 0.55;          // seconds between shots
+  const RAPID_FIRE_COOLDOWN = 0.18;
+  const SPEED_MULT = 1.7;
+  const POWERUP_DURATION = 6;          // seconds
+  const POWERUP_SPAWN_MIN = 4;
+  const POWERUP_SPAWN_MAX = 9;
+  const MAX_HP = 3;
 
   const keys = new Set();
   window.addEventListener("keydown", (e) => {
     keys.add(e.key);
-    // voorkom dat spatie scrollt
-    if (e.key === " " || e.key === "ArrowUp" || e.key === "ArrowDown") e.preventDefault();
+    if ([" ", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter"].includes(e.key)) e.preventDefault();
     if (gameOver && (e.key === "Enter" || e.key === " ")) reset();
   }, { passive: false });
-
   window.addEventListener("keyup", (e) => keys.delete(e.key));
 
   function rand(a,b){ return Math.random()*(b-a) + a; }
-  function randInt(a,b){ return (Math.random()*(b-a+1) + a) | 0; }
-
-  let px, py, vx, vy;
-  let platforms, cameraY, score, gameOver;
-
-  // double-jump state
-  let doubleReadyAt = 0;     // timestamp in seconds
-  let doubleAvailable = true;
-  let usedDoubleThisAir = false;
-  let prevDoubleKeyDown = false;
-
-  // obstacles
-  let birds;
-  let nextBirdAt = 0;        // timestamp in seconds
-
-  // timing
-  let t = 0; // seconds since start
-
-  function addPlatform(cx, cy) {
-    platforms.push({ x: cx - PLATFORM_W/2, y: cy - PLATFORM_H/2, w: PLATFORM_W, h: PLATFORM_H });
+  function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+  function aabb(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
   }
 
-  function spawnBird() {
-    // Spawn vanaf links of rechts
-    const fromLeft = Math.random() < 0.5;
-    const y = rand(H*0.18, H*0.72);
-    const speed = rand(BIRD_SPEED_MIN, BIRD_SPEED_MAX) * (fromLeft ? 1 : -1);
-    const x = fromLeft ? -BIRD_W : (W + BIRD_W);
-    birds.push({ x, y, vx: speed, w: BIRD_W, h: BIRD_H });
+  // Walls (static obstacles)
+  let walls;
+  function buildWalls() {
+    walls = [
+      // outer border (implicit via canvas edges, but add inner walls)
+      // center cross
+      { x: W/2 - 60, y: H/2 - 8,  w: 120, h: 16 },
+      { x: W/2 - 8,  y: H/2 - 60, w: 16,  h: 120 },
+      // corners
+      { x: 120, y: 110, w: 16, h: 120 },
+      { x: W - 136, y: 110, w: 16, h: 120 },
+      { x: 120, y: H - 230, w: 16, h: 120 },
+      { x: W - 136, y: H - 230, w: 16, h: 120 },
+      // small blocks
+      { x: 220, y: 80, w: 80, h: 16 },
+      { x: W - 300, y: 80, w: 80, h: 16 },
+      { x: 220, y: H - 96, w: 80, h: 16 },
+      { x: W - 300, y: H - 96, w: 80, h: 16 },
+    ];
   }
 
-  function scheduleNextBird() {
-    nextBirdAt = t + rand(BIRD_MIN_INTERVAL, BIRD_MAX_INTERVAL);
+  // Tanks
+  let p1, p2;
+  function makeTank(x, y, angle, color, controls) {
+    return {
+      x, y, angle,
+      color,
+      controls,                // {up, down, left, right, fire}
+      hp: MAX_HP,
+      cooldown: 0,
+      // powerup effects
+      speedUntil: 0,
+      rapidUntil: 0,
+      shieldUntil: 0,
+    };
   }
+
+  // Bullets
+  let bullets;
+
+  // Powerups: types speed, rapid, shield
+  let powerups;
+  let nextPowerupAt;
+  let t;
+
+  let gameOver;
 
   function reset() {
-    ov.style.display = "none";
+    ov.classList.remove("show");
     gameOver = false;
-
-    score = 0;
-    cameraY = 0;
-
-    // speler start
-    px = W/2; py = H*0.68;
-    vx = 0; vy = -200;
-
-    // double jump reset
     t = 0;
-    doubleReadyAt = 0;
-    doubleAvailable = true;
-    usedDoubleThisAir = false;
-    prevDoubleKeyDown = false;
 
-    // platforms reset
-    platforms = [];
+    buildWalls();
 
-    // FIX: startplatform altijd haalbaar (recht onder speler + extra dichtbij)
-    addPlatform(px, py + 60);
-    addPlatform(clamp(px + rand(-60,60), PLATFORM_W/2, W-PLATFORM_W/2), py - 10);
+    p1 = makeTank(80, H/2, 0, "#3498DB", {
+      up: "w", down: "s", left: "a", right: "d", fire: " "
+    });
+    p2 = makeTank(W - 80, H/2, Math.PI, "#E74C3C", {
+      up: "ArrowUp", down: "ArrowDown", left: "ArrowLeft", right: "ArrowRight", fire: "Enter"
+    });
 
-    // rest omhoog genereren (relatief kleine gap zodat je nooit “onmogelijk” start)
-    let y = py - 40;
-    for (let i=0;i<10;i++){
-      y -= randInt(GAP_MIN, GAP_MAX);
-      addPlatform(randInt(PLATFORM_W/2, W-PLATFORM_W/2), y);
-    }
-
-    // obstacles reset
-    birds = [];
-    scheduleNextBird();
-
-    // hint
-    updateHint();
+    bullets = [];
+    powerups = [];
+    scheduleNextPowerup();
+    updateHUD();
   }
 
-  function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
-
-  function wrapX() {
-    if (px < -PLAYER_W/2) px = W + PLAYER_W/2;
-    else if (px > W + PLAYER_W/2) px = -PLAYER_W/2;
+  function scheduleNextPowerup() {
+    nextPowerupAt = t + rand(POWERUP_SPAWN_MIN, POWERUP_SPAWN_MAX);
   }
 
-  function aabb(ax, ay, aw, ah, bx, by, bw, bh) {
-    return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
-  }
-
-  function playerRect() {
-    return { x: px - PLAYER_W/2, y: py - PLAYER_H/2, w: PLAYER_W, h: PLAYER_H };
-  }
-
-  function checkPlatformCollisions(oldPy) {
-    if (vy <= 0) return;
-    const pr = playerRect();
-    const py1 = pr.y + pr.h;
-    const oldPy1 = oldPy + PLAYER_H/2;
-
-    for (const p of platforms) {
-      const x0 = p.x, x1 = p.x + p.w, y0 = p.y, y1 = p.y + p.h;
-      if (pr.x + pr.w <= x0 || pr.x >= x1) continue;
-
-      // speler kruist de bovenkant
-      if (oldPy1 <= y0 && py1 >= y0 && py1 <= y1 + 8) {
-        py = y0 - PLAYER_H/2;
-        vy = JUMP_VY;
-
-        // reset “in-air” dubbeljump wanneer je landt
-        usedDoubleThisAir = false;
-        break;
+  function spawnPowerup() {
+    const types = ["speed", "rapid", "shield"];
+    const type = types[Math.floor(Math.random()*types.length)];
+    // Find free spot
+    for (let tries = 0; tries < 30; tries++) {
+      const x = rand(40, W - 40);
+      const y = rand(40, H - 40);
+      const box = { x: x-14, y: y-14, w: 28, h: 28 };
+      let ok = true;
+      for (const w of walls) if (aabb(box, w)) { ok = false; break; }
+      if (ok) {
+        powerups.push({ x, y, type, r: 14, bob: rand(0, Math.PI*2) });
+        return;
       }
     }
   }
 
-  function recyclePlatforms() {
-    platforms = platforms.filter(p => p.y < H + 80);
-    while (platforms.length < 12) {
-      let topY = platforms.reduce((m,p)=>Math.min(m,p.y), H);
-      let newY = topY - randInt(GAP_MIN, GAP_MAX);
-      let newX = randInt(PLATFORM_W/2, W-PLATFORM_W/2);
-      addPlatform(newX, newY);
+  function tankRect(tank) {
+    return { x: tank.x - TANK_SIZE/2, y: tank.y - TANK_SIZE/2, w: TANK_SIZE, h: TANK_SIZE };
+  }
+
+  function tryMoveTank(tank, dx, dy) {
+    // Move in X then Y, blocking on wall collision
+    let nx = tank.x + dx;
+    let ny = tank.y + dy;
+
+    // X
+    let rect = { x: nx - TANK_SIZE/2, y: tank.y - TANK_SIZE/2, w: TANK_SIZE, h: TANK_SIZE };
+    if (rect.x < 0 || rect.x + rect.w > W) nx = tank.x;
+    else {
+      let blocked = false;
+      for (const w of walls) if (aabb(rect, w)) { blocked = true; break; }
+      if (blocked) nx = tank.x;
+    }
+
+    // Y
+    rect = { x: nx - TANK_SIZE/2, y: ny - TANK_SIZE/2, w: TANK_SIZE, h: TANK_SIZE };
+    if (rect.y < 0 || rect.y + rect.h > H) ny = tank.y;
+    else {
+      let blocked = false;
+      for (const w of walls) if (aabb(rect, w)) { blocked = true; break; }
+      if (blocked) ny = tank.y;
+    }
+
+    // Tank vs tank collision
+    const otherRect = tankRect(tank === p1 ? p2 : p1);
+    const finalRect = { x: nx - TANK_SIZE/2, y: ny - TANK_SIZE/2, w: TANK_SIZE, h: TANK_SIZE };
+    if (aabb(finalRect, otherRect)) { nx = tank.x; ny = tank.y; }
+
+    tank.x = nx; tank.y = ny;
+  }
+
+  function updateTank(tank) {
+    const c = tank.controls;
+    // rotation: left/right
+    if (keys.has(c.left))  tank.angle -= TANK_ROT_SPEED * DT;
+    if (keys.has(c.right)) tank.angle += TANK_ROT_SPEED * DT;
+
+    // forward/backward
+    let speed = TANK_SPEED;
+    if (t < tank.speedUntil) speed *= SPEED_MULT;
+    let move = 0;
+    if (keys.has(c.up)) move += 1;
+    if (keys.has(c.down)) move -= 0.6;
+    if (move !== 0) {
+      const dx = Math.cos(tank.angle) * speed * move * DT;
+      const dy = Math.sin(tank.angle) * speed * move * DT;
+      tryMoveTank(tank, dx, dy);
+    }
+
+    // shooting
+    tank.cooldown -= DT;
+    const cdNeeded = (t < tank.rapidUntil) ? RAPID_FIRE_COOLDOWN : FIRE_COOLDOWN;
+    if (keys.has(c.fire) && tank.cooldown <= 0) {
+      tank.cooldown = cdNeeded;
+      const muzzleDist = TANK_SIZE/2 + 8;
+      const bx = tank.x + Math.cos(tank.angle) * muzzleDist;
+      const by = tank.y + Math.sin(tank.angle) * muzzleDist;
+      bullets.push({
+        x: bx, y: by,
+        vx: Math.cos(tank.angle) * BULLET_SPEED,
+        vy: Math.sin(tank.angle) * BULLET_SPEED,
+        owner: tank,
+        life: BULLET_LIFE,
+        bounces: 0,
+      });
     }
   }
 
-  function endGame(reason) {
+  function updateBullets() {
+    for (const b of bullets) {
+      b.life -= DT;
+      let nx = b.x + b.vx * DT;
+      let ny = b.y + b.vy * DT;
+
+      // bounce off canvas edges
+      if (nx - BULLET_R < 0 || nx + BULLET_R > W) {
+        if (b.bounces >= BULLET_MAX_BOUNCES) { b.life = 0; continue; }
+        b.vx = -b.vx; b.bounces++;
+        nx = b.x + b.vx * DT;
+      }
+      if (ny - BULLET_R < 0 || ny + BULLET_R > H) {
+        if (b.bounces >= BULLET_MAX_BOUNCES) { b.life = 0; continue; }
+        b.vy = -b.vy; b.bounces++;
+        ny = b.y + b.vy * DT;
+      }
+
+      // bounce off walls
+      const br = { x: nx - BULLET_R, y: ny - BULLET_R, w: BULLET_R*2, h: BULLET_R*2 };
+      for (const w of walls) {
+        if (aabb(br, w)) {
+          if (b.bounces >= BULLET_MAX_BOUNCES) { b.life = 0; break; }
+          // figure out which side: use previous position
+          const prevX = b.x, prevY = b.y;
+          const fromLeft  = prevX + BULLET_R <= w.x;
+          const fromRight = prevX - BULLET_R >= w.x + w.w;
+          const fromTop   = prevY + BULLET_R <= w.y;
+          const fromBot   = prevY - BULLET_R >= w.y + w.h;
+          if (fromLeft || fromRight) { b.vx = -b.vx; nx = b.x + b.vx * DT; }
+          else if (fromTop || fromBot) { b.vy = -b.vy; ny = b.y + b.vy * DT; }
+          else { b.vx = -b.vx; b.vy = -b.vy; nx = b.x + b.vx * DT; ny = b.y + b.vy * DT; }
+          b.bounces++;
+          break;
+        }
+      }
+
+      b.x = nx; b.y = ny;
+
+      // hit tanks
+      for (const tank of [p1, p2]) {
+        if (tank.hp <= 0) continue;
+        const rect = tankRect(tank);
+        if (aabb({x: b.x-BULLET_R, y: b.y-BULLET_R, w: BULLET_R*2, h: BULLET_R*2}, rect)) {
+          // can't hit yourself in first 0.1s (bullet just spawned in front of you, but just in case)
+          if (b.owner === tank && b.life > BULLET_LIFE - 0.1) continue;
+          if (t < tank.shieldUntil) {
+            // shield blocks, bullet dies
+            b.life = 0;
+          } else {
+            tank.hp -= 1;
+            b.life = 0;
+            if (tank.hp <= 0) endGame(tank === p1 ? "P2" : "P1");
+          }
+          break;
+        }
+      }
+    }
+    bullets = bullets.filter(b => b.life > 0);
+  }
+
+  function updatePowerups() {
+    if (t >= nextPowerupAt && powerups.length < 3) {
+      spawnPowerup();
+      scheduleNextPowerup();
+    }
+
+    // pickup
+    for (const pu of powerups) {
+      for (const tank of [p1, p2]) {
+        const dx = tank.x - pu.x, dy = tank.y - pu.y;
+        if (Math.hypot(dx, dy) < TANK_SIZE/2 + pu.r) {
+          applyPowerup(tank, pu.type);
+          pu.dead = true;
+          break;
+        }
+      }
+    }
+    powerups = powerups.filter(p => !p.dead);
+  }
+
+  function applyPowerup(tank, type) {
+    if (type === "speed") tank.speedUntil = t + POWERUP_DURATION;
+    if (type === "rapid") tank.rapidUntil = t + POWERUP_DURATION;
+    if (type === "shield") tank.shieldUntil = t + POWERUP_DURATION;
+  }
+
+  function endGame(winner) {
     gameOver = true;
-    scoreText.textContent = `Score: ${score}` + (reason ? ` — ${reason}` : "");
-    ov.style.display = "flex";
+    winText.textContent = `${winner} WINS! 🏆`;
+    winText.style.color = winner === "P1" ? "#5DADE2" : "#EC7063";
+    ov.classList.add("show");
+  }
+
+  function updateHUD() {
+    const h1 = "❤".repeat(p1.hp) + "🖤".repeat(MAX_HP - p1.hp);
+    const h2 = "❤".repeat(p2.hp) + "🖤".repeat(MAX_HP - p2.hp);
+    const pu1 = activeIcons(p1);
+    const pu2 = activeIcons(p2);
+    hud1.innerHTML = `P1 (WASD + Space) ${h1} ${pu1}`;
+    hud2.innerHTML = `P2 (Arrows + Enter) ${h2} ${pu2}`;
+  }
+
+  function activeIcons(tank) {
+    let s = "";
+    if (t < tank.speedUntil)  s += " ⚡";
+    if (t < tank.rapidUntil)  s += " 🔫";
+    if (t < tank.shieldUntil) s += " 🛡";
+    return s;
   }
 
   again.addEventListener("click", reset);
 
-  function updateHint() {
-    const cdLeft = Math.max(0, doubleReadyAt - t);
-    const ready = cdLeft <= 0;
-    hint.textContent = `Score: ${score} | Double jump: ${ready ? "READY (Shift/E)" : `${cdLeft.toFixed(0)}s`}`;
-  }
-
-  function tryDoubleJump() {
-    // Edge-trigger: alleen op “net ingedrukt”
-    const downNow = [...DOUBLE_USE_KEYS].some(k => keys.has(k));
-    const pressed = downNow && !prevDoubleKeyDown;
-    prevDoubleKeyDown = downNow;
-
-    if (!pressed) return;
-    if (gameOver) return;
-
-    // voorwaarden:
-    // - cooldown voorbij
-    // - nog niet gebruikt tijdens deze sprong
-    // - alleen wanneer je in de lucht bent (niet net op platform)
-    // - als je al extreem hard valt: alsnog toestaan, maar cap (veiligheid)
-    if (t < doubleReadyAt) return;
-    if (usedDoubleThisAir) return;
-
-    // “in-air” detectie: als je niet op platform staat (we gebruiken simpel: vy != JUMP_VY en py niet exact op platform)
-    // Hier: sta toe zolang speler niet net exact op platform staat; praktisch: altijd behalve op landingsframe.
-    usedDoubleThisAir = true;
-    doubleReadyAt = t + DOUBLE_CD;
-
-    // geef boost
-    vy = Math.min(vy, DOUBLE_WINDOW_VY);
-    vy = DOUBLE_JUMP_VY;
-  }
-
-  function updateBirds() {
-    // spawn
-    if (t >= nextBirdAt) {
-      // niet elke keer: soms geen hindernis (anders te irritant)
-      if (Math.random() < 0.75) spawnBird();
-      scheduleNextBird();
-    }
-
-    // move
-    for (const b of birds) {
-      b.x += b.vx * DT;
-    }
-
-    // remove offscreen
-    birds = birds.filter(b => b.x > -BIRD_W*2 && b.x < W + BIRD_W*2);
-
-    // collision
-    const pr = playerRect();
-    for (const b of birds) {
-      const bx = b.x - b.w/2, by = b.y - b.h/2;
-      if (aabb(pr.x, pr.y, pr.w, pr.h, bx, by, b.w, b.h)) {
-        endGame("geraakt door vogel");
-        break;
-      }
-    }
-  }
-
   function update() {
     if (gameOver) return;
-
     t += DT;
+    updateTank(p1);
+    updateTank(p2);
+    updateBullets();
+    updatePowerups();
+    updateHUD();
+  }
 
-    const left = keys.has("ArrowLeft") || keys.has("a") || keys.has("A");
-    const right = keys.has("ArrowRight") || keys.has("d") || keys.has("D");
-    vx = left && !right ? -MOVE_SPEED : right && !left ? MOVE_SPEED : 0;
-
-    // double-jump input check (moet vóór physics, zodat het meteen effect heeft)
-    tryDoubleJump();
-
-    // physics
-    vy += GRAVITY * DT;
-    const oldPy = py;
-
-    px += vx * DT;
-    py += vy * DT;
-
-    wrapX();
-    checkPlatformCollisions(oldPy);
-
-    // camera scroll
-    if (py < SCROLL_LINE) {
-      const dy = SCROLL_LINE - py;
-      py = SCROLL_LINE;
-      cameraY += dy;
-
-      for (const p of platforms) p.y += dy;
-      for (const b of birds) b.y += dy; // obstacles scrollen mee (blijven “in de wereld”)
-
-      score = Math.max(score, cameraY | 0);
-      recyclePlatforms();
+  // -- Drawing --
+  function drawWalls() {
+    for (const w of walls) {
+      ctx.fillStyle = "#4a3526";
+      ctx.fillRect(w.x, w.y, w.w, w.h);
+      ctx.strokeStyle = "#2e2014";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(w.x, w.y, w.w, w.h);
     }
+  }
 
-    // obstacles update
-    updateBirds();
+  function drawTank(tank) {
+    if (tank.hp <= 0) return;
+    ctx.save();
+    ctx.translate(tank.x, tank.y);
+    ctx.rotate(tank.angle);
 
-    // game over: vallen onder scherm
-    if (!gameOver && py - PLAYER_H/2 > H) endGame("gevallen");
+    // body
+    ctx.fillStyle = tank.color;
+    ctx.fillRect(-TANK_SIZE/2, -TANK_SIZE/2, TANK_SIZE, TANK_SIZE);
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-TANK_SIZE/2, -TANK_SIZE/2, TANK_SIZE, TANK_SIZE);
 
-    updateHint();
+    // tracks
+    ctx.fillStyle = "#222";
+    ctx.fillRect(-TANK_SIZE/2, -TANK_SIZE/2 - 3, TANK_SIZE, 4);
+    ctx.fillRect(-TANK_SIZE/2, TANK_SIZE/2 - 1, TANK_SIZE, 4);
+
+    // turret
+    ctx.fillStyle = "#333";
+    ctx.beginPath();
+    ctx.arc(0, 0, 8, 0, Math.PI*2);
+    ctx.fill();
+
+    // barrel
+    ctx.fillStyle = "#222";
+    ctx.fillRect(0, -3, TANK_SIZE/2 + 8, 6);
+
+    ctx.restore();
+
+    // shield aura
+    if (t < tank.shieldUntil) {
+      ctx.strokeStyle = "rgba(120, 200, 255, 0.8)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(tank.x, tank.y, TANK_SIZE/2 + 6 + Math.sin(t*8)*1.5, 0, Math.PI*2);
+      ctx.stroke();
+    }
+  }
+
+  function drawBullets() {
+    for (const b of bullets) {
+      ctx.fillStyle = "#FFD93D";
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, BULLET_R, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+
+  function drawPowerups() {
+    for (const pu of powerups) {
+      const bob = Math.sin(t*3 + pu.bob) * 2;
+      const colorMap = { speed: "#F1C40F", rapid: "#E67E22", shield: "#5DADE2" };
+      const iconMap  = { speed: "⚡",     rapid: "🔫",     shield: "🛡" };
+      ctx.fillStyle = colorMap[pu.type];
+      ctx.beginPath();
+      ctx.arc(pu.x, pu.y + bob, pu.r, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.font = "16px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(iconMap[pu.type], pu.x, pu.y + bob + 1);
+    }
   }
 
   function draw() {
-    ctx.clearRect(0,0,W,H);
-
-    // platforms
-    for (const p of platforms) {
-      ctx.fillStyle = "#2ECC71";
-      ctx.fillRect(p.x, p.y, p.w, p.h);
-      ctx.strokeStyle = "#1E9E52";
-      ctx.strokeRect(p.x, p.y, p.w, p.h);
+    // background grid
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#2a3d2a";
+    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "rgba(0,0,0,0.08)";
+    ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 40) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += 40) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
     }
 
-    // birds (hindernissen)
-    for (const b of birds) {
-      const x = b.x, y = b.y;
-      // simpel vogeltje: body + vleugel
-      ctx.fillStyle = "#444";
-      ctx.beginPath();
-      ctx.ellipse(x, y, b.w/2, b.h/2, 0, 0, Math.PI*2);
-      ctx.fill();
-      ctx.fillStyle = "#222";
-      ctx.beginPath();
-      ctx.ellipse(x + (b.vx>0 ? -6 : 6), y-4, 10, 6, 0.4, 0, Math.PI*2);
-      ctx.fill();
-      // snavel
-      ctx.fillStyle = "#C58A2B";
-      ctx.beginPath();
-      ctx.moveTo(x + (b.vx>0 ? b.w/2 : -b.w/2), y);
-      ctx.lineTo(x + (b.vx>0 ? b.w/2 + 10 : -b.w/2 - 10), y-3);
-      ctx.lineTo(x + (b.vx>0 ? b.w/2 + 10 : -b.w/2 - 10), y+3);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    // player
-    ctx.fillStyle = "#3498DB";
-    ctx.beginPath();
-    ctx.ellipse(px, py, PLAYER_W/2, PLAYER_H/2, 0, 0, Math.PI*2);
-    ctx.fill();
-    ctx.strokeStyle = "#1F6FA3";
-    ctx.stroke();
-
-    // eyes
-    ctx.fillStyle = "white";
-    ctx.beginPath(); ctx.ellipse(px-4, py-4, 2, 2, 0, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(px+4, py-4, 2, 2, 0, 0, Math.PI*2); ctx.fill();
+    drawWalls();
+    drawPowerups();
+    drawBullets();
+    drawTank(p1);
+    drawTank(p2);
   }
 
   function loop() {
