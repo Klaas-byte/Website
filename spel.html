@@ -754,6 +754,9 @@
 
   function draw() {
     drawGrid();
+    // only draw game objects when a game is active
+    if (state !== "playing" && state !== "end") return;
+    if (!walls || !players) return;
     drawWalls();
     drawBases();
     drawPowerups();
