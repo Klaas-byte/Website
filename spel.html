@@ -3,27 +3,41 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tank Battle 1v1</title>
+  <title>Tank Battle</title>
   <style>
     body { margin: 0; display: grid; place-items: center; height: 100vh; background: #111; font-family: system-ui, Arial; }
-    canvas { background: #2a3d2a; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+    canvas { background: #2a3d2a; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.4); display:block; }
     .wrap { position: relative; }
     .overlay{
       position:absolute; inset:0; display:none; align-items:center; justify-content:center;
-      flex-direction:column; gap:12px; color:#fff;
-      background: rgba(0,0,0,.55); border-radius: 12px;
+      flex-direction:column; gap:14px; color:#fff;
+      background: rgba(0,0,0,.7); border-radius: 12px; padding: 30px; text-align:center;
     }
     .overlay.show { display:flex; }
-    button { padding: 10px 18px; font-weight: 700; cursor: pointer; border:0; border-radius:8px; background:#3498DB; color:#fff; font-size:14px; }
+    .overlay h1 { margin: 0; font-size: 36px; }
+    .overlay h2 { margin: 0; font-size: 24px; }
+    .overlay p { margin: 0; max-width: 500px; line-height: 1.5; }
+    button {
+      padding: 12px 22px; font-weight: 700; cursor: pointer; border:0; border-radius:8px;
+      background:#3498DB; color:#fff; font-size:15px; min-width: 220px;
+    }
     button:hover { background:#2980B9; }
+    button.red { background:#E74C3C; } button.red:hover { background:#C0392B; }
+    button.green { background:#27AE60; } button.green:hover { background:#1E8449; }
     .hud{
       position:absolute; left:0; right:0; top:10px; display:flex; justify-content:space-between;
       padding: 0 14px; font: 13px system-ui, Arial; color:#fff; pointer-events:none;
       text-shadow: 0 1px 2px rgba(0,0,0,.6);
     }
-    .player { background: rgba(0,0,0,.35); padding:6px 10px; border-radius:8px; }
+    .player { background: rgba(0,0,0,.45); padding:6px 10px; border-radius:8px; }
     .p1 { border-left: 4px solid #3498DB; }
-    .p2 { border-left: 4px solid #E74C3C; }
+    .p2 { border-left: 4px solid #2ECC71; }
+    .mission-banner {
+      position:absolute; left:50%; top:50px; transform: translateX(-50%);
+      background: rgba(0,0,0,.6); padding:6px 14px; border-radius:8px;
+      font: bold 13px system-ui; color:#fff; pointer-events:none;
+      text-shadow: 0 1px 2px rgba(0,0,0,.6);
+    }
     .controls {
       position:absolute; left:0; right:0; bottom:8px; text-align:center;
       font: 11px system-ui, Arial; color: rgba(255,255,255,.7);
@@ -34,14 +48,35 @@
 <body>
   <div class="wrap">
     <canvas id="c" width="900" height="600"></canvas>
-    <div class="hud">
-      <div class="player p1" id="hud1">P1 (WASD + Space) ❤❤❤</div>
-      <div class="player p2" id="hud2">P2 (Arrows + Enter) ❤❤❤</div>
+
+    <div class="hud" id="hud" style="display:none;">
+      <div class="player p1" id="hud1"></div>
+      <div class="player p2" id="hud2"></div>
     </div>
-    <div class="controls">P1: WASD bewegen, SPACE schieten &nbsp;|&nbsp; P2: Pijltjes bewegen, ENTER schieten</div>
-    <div id="ov" class="overlay">
-      <div id="winText" style="font-size:32px;font-weight:800;"></div>
-      <button id="again">Play Again</button>
+    <div class="mission-banner" id="banner" style="display:none;"></div>
+    <div class="controls" id="ctrlHint" style="display:none;">
+      P1: WASD bewegen, SPACE schieten &nbsp;|&nbsp; P2: Pijltjes bewegen, ENTER schieten
+    </div>
+
+    <div id="menu" class="overlay show">
+      <h1>🪖 TANK BATTLE</h1>
+      <p>Kies een spelmodus</p>
+      <button class="red" id="btn1v1">⚔️ 1v1 — Speler vs Speler</button>
+      <button class="green" id="btnCoop">🤝 Co-op Campaign — 2 spelers vs Bots</button>
+    </div>
+
+    <div id="briefing" class="overlay">
+      <h2 id="briefTitle"></h2>
+      <p id="briefDesc"></p>
+      <button id="btnStartMission">Start missie</button>
+    </div>
+
+    <div id="endScreen" class="overlay">
+      <h1 id="endTitle"></h1>
+      <p id="endDesc"></p>
+      <button id="btnContinue" style="display:none;">Volgende missie ➜</button>
+      <button id="btnAgain">Opnieuw spelen</button>
+      <button id="btnMenu" class="red">Terug naar menu</button>
     </div>
   </div>
 
@@ -49,438 +84,694 @@
 (() => {
   const canvas = document.getElementById("c");
   const ctx = canvas.getContext("2d");
-  const ov = document.getElementById("ov");
-  const winText = document.getElementById("winText");
-  const again = document.getElementById("again");
-  const hud1 = document.getElementById("hud1");
-  const hud2 = document.getElementById("hud2");
-
   const W = canvas.width, H = canvas.height;
   const DT = 1/60;
 
-  // Tank settings
+  const menu = document.getElementById("menu");
+  const briefing = document.getElementById("briefing");
+  const briefTitle = document.getElementById("briefTitle");
+  const briefDesc = document.getElementById("briefDesc");
+  const endScreen = document.getElementById("endScreen");
+  const endTitle = document.getElementById("endTitle");
+  const endDesc = document.getElementById("endDesc");
+  const btnContinue = document.getElementById("btnContinue");
+  const btnAgain = document.getElementById("btnAgain");
+  const btnMenu = document.getElementById("btnMenu");
+  const hudEl = document.getElementById("hud");
+  const hud1 = document.getElementById("hud1");
+  const hud2 = document.getElementById("hud2");
+  const banner = document.getElementById("banner");
+  const ctrlHint = document.getElementById("ctrlHint");
+
   const TANK_SIZE = 28;
   const TANK_SPEED = 140;
-  const TANK_ROT_SPEED = 3.2;          // radians/sec
+  const TANK_ROT_SPEED = 3.2;
   const BULLET_SPEED = 360;
   const BULLET_R = 4;
-  const BULLET_LIFE = 3.0;             // seconds
+  const BULLET_LIFE = 3.0;
   const BULLET_MAX_BOUNCES = 1;
-  const FIRE_COOLDOWN = 0.55;          // seconds between shots
+  const FIRE_COOLDOWN = 0.55;
   const RAPID_FIRE_COOLDOWN = 0.18;
   const SPEED_MULT = 1.7;
-  const POWERUP_DURATION = 6;          // seconds
+  const POWERUP_DURATION = 6;
   const POWERUP_SPAWN_MIN = 4;
   const POWERUP_SPAWN_MAX = 9;
   const MAX_HP = 3;
+  const RESPAWN_TIME = 3.0;
 
   const keys = new Set();
   window.addEventListener("keydown", (e) => {
     keys.add(e.key);
     if ([" ", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter"].includes(e.key)) e.preventDefault();
-    if (gameOver && (e.key === "Enter" || e.key === " ")) reset();
   }, { passive: false });
   window.addEventListener("keyup", (e) => keys.delete(e.key));
 
   function rand(a,b){ return Math.random()*(b-a) + a; }
-  function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
   function aabb(a, b) {
     return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
   }
+  function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 
-  // Walls (static obstacles)
-  let walls;
-  function buildWalls() {
-    walls = [
-      // outer border (implicit via canvas edges, but add inner walls)
-      // center cross
-      { x: W/2 - 60, y: H/2 - 8,  w: 120, h: 16 },
-      { x: W/2 - 8,  y: H/2 - 60, w: 16,  h: 120 },
-      // corners
+  let mode = null, missionIdx = 0, state = "menu", t = 0;
+  let walls, bullets, powerups, nextPowerupAt;
+  let players, bots, bases, boss;
+  let waveCount, enemiesToSpawn, maxAliveEnemies, nextEnemySpawn;
+  let endShown = false;
+
+  function makeTank(opts) {
+    return {
+      x: opts.x, y: opts.y, angle: opts.angle || 0,
+      color: opts.color,
+      controls: opts.controls || null,
+      isBot: !!opts.isBot,
+      botSkill: opts.botSkill || "easy",
+      isBoss: !!opts.isBoss,
+      hp: opts.hp ?? MAX_HP,
+      maxHp: opts.hp ?? MAX_HP,
+      cooldown: 0,
+      size: opts.size || TANK_SIZE,
+      speed: opts.speed || TANK_SPEED,
+      fireCD: opts.fireCD || FIRE_COOLDOWN,
+      speedUntil: 0, rapidUntil: 0, shieldUntil: 0,
+      dead: false, respawnAt: 0,
+      spawnX: opts.x, spawnY: opts.y, spawnAngle: opts.angle || 0,
+      botTarget: null, botRetargetAt: 0, botStrafe: 0, botStrafeUntil: 0,
+    };
+  }
+
+  function buildArenaWalls() {
+    return [
+      { x: W/2 - 60, y: H/2 - 8, w: 120, h: 16 },
+      { x: W/2 - 8, y: H/2 - 60, w: 16, h: 120 },
       { x: 120, y: 110, w: 16, h: 120 },
       { x: W - 136, y: 110, w: 16, h: 120 },
       { x: 120, y: H - 230, w: 16, h: 120 },
       { x: W - 136, y: H - 230, w: 16, h: 120 },
-      // small blocks
       { x: 220, y: 80, w: 80, h: 16 },
       { x: W - 300, y: 80, w: 80, h: 16 },
       { x: 220, y: H - 96, w: 80, h: 16 },
       { x: W - 300, y: H - 96, w: 80, h: 16 },
     ];
   }
-
-  // Tanks
-  let p1, p2;
-  function makeTank(x, y, angle, color, controls) {
-    return {
-      x, y, angle,
-      color,
-      controls,                // {up, down, left, right, fire}
-      hp: MAX_HP,
-      cooldown: 0,
-      // powerup effects
-      speedUntil: 0,
-      rapidUntil: 0,
-      shieldUntil: 0,
-    };
+  function buildBaseMapWalls() {
+    return [
+      { x: W/2 - 8, y: 0, w: 16, h: 180 },
+      { x: W/2 - 8, y: H - 180, w: 16, h: 180 },
+      { x: 0, y: H/2 - 8, w: 200, h: 16 },
+      { x: W - 200, y: H/2 - 8, w: 200, h: 16 },
+      { x: 250, y: 250, w: 16, h: 100 },
+      { x: W - 266, y: 250, w: 16, h: 100 },
+    ];
+  }
+  function buildBossMapWalls() {
+    return [
+      { x: 180, y: 140, w: 16, h: 80 },
+      { x: W - 196, y: 140, w: 16, h: 80 },
+      { x: 180, y: H - 220, w: 16, h: 80 },
+      { x: W - 196, y: H - 220, w: 16, h: 80 },
+      { x: W/2 - 60, y: H - 100, w: 120, h: 16 },
+      { x: W/2 - 60, y: 84, w: 120, h: 16 },
+    ];
   }
 
-  // Bullets
-  let bullets;
+  const missions = [
+    {
+      title: "Missie 1: Survival",
+      desc: "Overleef 3 golven vijandelijke tanks. Werk samen en zoek dekking achter muren.",
+      setup: () => {
+        walls = buildArenaWalls();
+        bots = []; bases = []; boss = null;
+        waveCount = 0; enemiesToSpawn = 0; maxAliveEnemies = 3;
+        startWave();
+      },
+      update: () => {
+        if (enemiesToSpawn > 0 && bots.filter(b => !b.dead).length < maxAliveEnemies) {
+          if (t >= nextEnemySpawn) {
+            spawnBot("easy"); enemiesToSpawn--;
+            nextEnemySpawn = t + rand(1.0, 2.0);
+          }
+        }
+        if (enemiesToSpawn === 0 && bots.filter(b => !b.dead).length === 0) {
+          if (waveCount >= 3) return "win";
+          startWave();
+        }
+        return null;
+      },
+      banner: () => `Wave ${waveCount}/3  •  Vijanden: ${bots.filter(b=>!b.dead).length + enemiesToSpawn}`,
+    },
+    {
+      title: "Missie 2: Vernietig de Bases",
+      desc: "Vernietig de 3 vijandelijke bases (oranje torens, 5 HP elk). Vijandelijke tanks patrouilleren — wees voorzichtig.",
+      setup: () => {
+        walls = buildBaseMapWalls();
+        bots = []; boss = null;
+        bases = [
+          { x: 100, y: 100, hp: 5, maxHp: 5, w: 36, h: 36 },
+          { x: W - 136, y: 100, hp: 5, maxHp: 5, w: 36, h: 36 },
+          { x: W/2 - 18, y: H - 136, hp: 5, maxHp: 5, w: 36, h: 36 },
+        ];
+        spawnBot("medium", { x: W/2, y: 150 });
+        spawnBot("medium", { x: W/2, y: H - 150 });
+        enemiesToSpawn = 3; maxAliveEnemies = 3;
+        nextEnemySpawn = t + 6;
+      },
+      update: () => {
+        if (enemiesToSpawn > 0 && bots.filter(b => !b.dead).length < maxAliveEnemies && t >= nextEnemySpawn) {
+          spawnBot("medium"); enemiesToSpawn--;
+          nextEnemySpawn = t + 7;
+        }
+        if (bases.every(b => b.hp <= 0)) return "win";
+        return null;
+      },
+      banner: () => `Bases over: ${bases.filter(b=>b.hp>0).length}/3`,
+    },
+    {
+      title: "Missie 3: Boss Battle",
+      desc: "Verslag de Boss Tank (15 HP, groter en sterker). Hij wordt geholpen door slimme support-tanks. Veel succes, commandant!",
+      setup: () => {
+        walls = buildBossMapWalls();
+        bots = []; bases = [];
+        boss = makeTank({
+          x: W/2, y: 120, angle: Math.PI/2, color: "#8E44AD",
+          isBot: true, botSkill: "hard", isBoss: true,
+          hp: 15, size: 44, speed: 110, fireCD: 0.9,
+        });
+        spawnBot("hard", { x: 100, y: H/2 });
+        spawnBot("hard", { x: W - 100, y: H/2 });
+        enemiesToSpawn = 4; maxAliveEnemies = 2;
+        nextEnemySpawn = t + 10;
+      },
+      update: () => {
+        if (enemiesToSpawn > 0 && bots.filter(b => !b.dead).length < maxAliveEnemies && t >= nextEnemySpawn) {
+          spawnBot("hard"); enemiesToSpawn--;
+          nextEnemySpawn = t + 12;
+        }
+        if (boss && boss.dead) return "win";
+        return null;
+      },
+      banner: () => `Boss HP: ${boss ? Math.max(0,boss.hp) : 0}/15  •  Support: ${bots.filter(b=>!b.dead).length}`,
+    },
+  ];
 
-  // Powerups: types speed, rapid, shield
-  let powerups;
-  let nextPowerupAt;
-  let t;
-
-  let gameOver;
-
-  function reset() {
-    ov.classList.remove("show");
-    gameOver = false;
-    t = 0;
-
-    buildWalls();
-
-    p1 = makeTank(80, H/2, 0, "#3498DB", {
-      up: "w", down: "s", left: "a", right: "d", fire: " "
-    });
-    p2 = makeTank(W - 80, H/2, Math.PI, "#E74C3C", {
-      up: "ArrowUp", down: "ArrowDown", left: "ArrowLeft", right: "ArrowRight", fire: "Enter"
-    });
-
-    bullets = [];
-    powerups = [];
-    scheduleNextPowerup();
-    updateHUD();
-  }
-
-  function scheduleNextPowerup() {
-    nextPowerupAt = t + rand(POWERUP_SPAWN_MIN, POWERUP_SPAWN_MAX);
-  }
-
-  function spawnPowerup() {
-    const types = ["speed", "rapid", "shield"];
-    const type = types[Math.floor(Math.random()*types.length)];
-    // Find free spot
-    for (let tries = 0; tries < 30; tries++) {
-      const x = rand(40, W - 40);
-      const y = rand(40, H - 40);
-      const box = { x: x-14, y: y-14, w: 28, h: 28 };
-      let ok = true;
-      for (const w of walls) if (aabb(box, w)) { ok = false; break; }
-      if (ok) {
-        powerups.push({ x, y, type, r: 14, bob: rand(0, Math.PI*2) });
-        return;
+  function spawnBot(skill, pos) {
+    let x, y;
+    if (pos) { x = pos.x; y = pos.y; }
+    else {
+      for (let i = 0; i < 30; i++) {
+        const side = Math.floor(rand(0, 4));
+        if (side === 0) { x = rand(40, W-40); y = 30; }
+        else if (side === 1) { x = rand(40, W-40); y = H-30; }
+        else if (side === 2) { x = 30; y = rand(40, H-40); }
+        else { x = W-30; y = rand(40, H-40); }
+        let okDist = true;
+        for (const p of players) if (!p.dead && dist({x,y}, p) < 200) { okDist = false; break; }
+        const rect = { x: x-TANK_SIZE/2, y: y-TANK_SIZE/2, w: TANK_SIZE, h: TANK_SIZE };
+        let onWall = false;
+        for (const w of walls) if (aabb(rect, w)) { onWall = true; break; }
+        if (okDist && !onWall) break;
       }
     }
+    bots.push(makeTank({
+      x, y, angle: rand(0, Math.PI*2),
+      color: skill === "hard" ? "#C0392B" : skill === "medium" ? "#D35400" : "#E67E22",
+      isBot: true, botSkill: skill,
+      hp: skill === "hard" ? 3 : 2,
+    }));
+  }
+
+  function startWave() {
+    waveCount++;
+    enemiesToSpawn = 2 + waveCount;
+    nextEnemySpawn = t + 1;
   }
 
   function tankRect(tank) {
-    return { x: tank.x - TANK_SIZE/2, y: tank.y - TANK_SIZE/2, w: TANK_SIZE, h: TANK_SIZE };
+    return { x: tank.x - tank.size/2, y: tank.y - tank.size/2, w: tank.size, h: tank.size };
   }
 
-  function tryMoveTank(tank, dx, dy) {
-    // Move in X then Y, blocking on wall collision
+  function tryMoveTank(tank, dx, dy, allTanks) {
     let nx = tank.x + dx;
     let ny = tank.y + dy;
+    const half = tank.size/2;
 
-    // X
-    let rect = { x: nx - TANK_SIZE/2, y: tank.y - TANK_SIZE/2, w: TANK_SIZE, h: TANK_SIZE };
+    let rect = { x: nx - half, y: tank.y - half, w: tank.size, h: tank.size };
     if (rect.x < 0 || rect.x + rect.w > W) nx = tank.x;
-    else {
-      let blocked = false;
-      for (const w of walls) if (aabb(rect, w)) { blocked = true; break; }
-      if (blocked) nx = tank.x;
-    }
+    else { for (const w of walls) if (aabb(rect, w)) { nx = tank.x; break; } }
 
-    // Y
-    rect = { x: nx - TANK_SIZE/2, y: ny - TANK_SIZE/2, w: TANK_SIZE, h: TANK_SIZE };
+    rect = { x: nx - half, y: ny - half, w: tank.size, h: tank.size };
     if (rect.y < 0 || rect.y + rect.h > H) ny = tank.y;
-    else {
-      let blocked = false;
-      for (const w of walls) if (aabb(rect, w)) { blocked = true; break; }
-      if (blocked) ny = tank.y;
+    else { for (const w of walls) if (aabb(rect, w)) { ny = tank.y; break; } }
+
+    const finalRect = { x: nx - half, y: ny - half, w: tank.size, h: tank.size };
+    for (const o of allTanks) {
+      if (o === tank || o.dead) continue;
+      if (aabb(finalRect, tankRect(o))) { nx = tank.x; ny = tank.y; break; }
     }
-
-    // Tank vs tank collision
-    const otherRect = tankRect(tank === p1 ? p2 : p1);
-    const finalRect = { x: nx - TANK_SIZE/2, y: ny - TANK_SIZE/2, w: TANK_SIZE, h: TANK_SIZE };
-    if (aabb(finalRect, otherRect)) { nx = tank.x; ny = tank.y; }
-
+    for (const b of bases) {
+      if (b.hp <= 0) continue;
+      if (aabb(finalRect, { x: b.x, y: b.y, w: b.w, h: b.h })) { nx = tank.x; ny = tank.y; break; }
+    }
     tank.x = nx; tank.y = ny;
   }
 
-  function updateTank(tank) {
-    const c = tank.controls;
-    // rotation: left/right
-    if (keys.has(c.left))  tank.angle -= TANK_ROT_SPEED * DT;
-    if (keys.has(c.right)) tank.angle += TANK_ROT_SPEED * DT;
+  function fireBullet(tank) {
+    if (tank.cooldown > 0) return false;
+    const cdNeeded = (t < tank.rapidUntil) ? RAPID_FIRE_COOLDOWN : tank.fireCD;
+    tank.cooldown = cdNeeded;
+    const muzzleDist = tank.size/2 + 8;
+    bullets.push({
+      x: tank.x + Math.cos(tank.angle) * muzzleDist,
+      y: tank.y + Math.sin(tank.angle) * muzzleDist,
+      vx: Math.cos(tank.angle) * BULLET_SPEED,
+      vy: Math.sin(tank.angle) * BULLET_SPEED,
+      owner: tank, ownerIsBot: tank.isBot,
+      life: BULLET_LIFE, bounces: 0,
+    });
+    return true;
+  }
 
-    // forward/backward
-    let speed = TANK_SPEED;
+  function updatePlayer(tank, allTanks) {
+    if (tank.dead) {
+      if (mode === "coop" && t >= tank.respawnAt) {
+        tank.dead = false; tank.hp = MAX_HP;
+        tank.x = tank.spawnX; tank.y = tank.spawnY; tank.angle = tank.spawnAngle;
+      }
+      return;
+    }
+    const c = tank.controls;
+    if (keys.has(c.left)) tank.angle -= TANK_ROT_SPEED * DT;
+    if (keys.has(c.right)) tank.angle += TANK_ROT_SPEED * DT;
+    let speed = tank.speed;
     if (t < tank.speedUntil) speed *= SPEED_MULT;
     let move = 0;
     if (keys.has(c.up)) move += 1;
     if (keys.has(c.down)) move -= 0.6;
     if (move !== 0) {
-      const dx = Math.cos(tank.angle) * speed * move * DT;
-      const dy = Math.sin(tank.angle) * speed * move * DT;
-      tryMoveTank(tank, dx, dy);
+      tryMoveTank(tank, Math.cos(tank.angle) * speed * move * DT, Math.sin(tank.angle) * speed * move * DT, allTanks);
+    }
+    tank.cooldown -= DT;
+    if (keys.has(c.fire)) fireBullet(tank);
+  }
+
+  function hasLineOfSight(from, to) {
+    const steps = 20;
+    for (let i = 1; i < steps; i++) {
+      const f = i/steps;
+      const x = from.x + (to.x - from.x) * f;
+      const y = from.y + (to.y - from.y) * f;
+      const p = { x: x-3, y: y-3, w: 6, h: 6 };
+      for (const w of walls) if (aabb(p, w)) return false;
+    }
+    return true;
+  }
+
+  function updateBot(tank, allTanks) {
+    if (tank.dead) return;
+    if (!tank.botTarget || tank.botTarget.dead || t >= tank.botRetargetAt) {
+      let best = null, bestD = Infinity;
+      for (const p of players) {
+        if (p.dead) continue;
+        const d = dist(p, tank);
+        if (d < bestD) { bestD = d; best = p; }
+      }
+      tank.botTarget = best;
+      tank.botRetargetAt = t + 1.5;
+    }
+    if (!tank.botTarget) return;
+    const target = tank.botTarget;
+    const dx = target.x - tank.x, dy = target.y - tank.y;
+    const targetAngle = Math.atan2(dy, dx);
+    let angleDiff = targetAngle - tank.angle;
+    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+    const d = Math.hypot(dx, dy);
+    const los = hasLineOfSight(tank, target);
+    const skill = tank.botSkill;
+
+    let rotSpeed = TANK_ROT_SPEED;
+    if (skill === "easy") rotSpeed *= 0.7;
+    if (skill === "hard") rotSpeed *= 1.2;
+    if (angleDiff > 0.05) tank.angle += rotSpeed * DT;
+    else if (angleDiff < -0.05) tank.angle -= rotSpeed * DT;
+
+    let moveDir = 0;
+    if (skill === "easy") {
+      if (d > 220) moveDir = 1;
+      else if (d < 120) moveDir = -0.6;
+    } else if (skill === "medium") {
+      const ideal = 220;
+      if (d > ideal + 40) moveDir = 1;
+      else if (d < ideal - 40) moveDir = -0.6;
+      if (los && t > tank.botStrafeUntil) {
+        tank.botStrafe = Math.random() < 0.5 ? -1 : 1;
+        tank.botStrafeUntil = t + rand(0.8, 1.6);
+      }
+    } else {
+      const ideal = 200;
+      if (!los) moveDir = 1;
+      else {
+        if (d > ideal + 30) moveDir = 1;
+        else if (d < ideal - 30) moveDir = -0.6;
+      }
+      if (t > tank.botStrafeUntil) {
+        tank.botStrafe = Math.random() < 0.5 ? -1 : 1;
+        tank.botStrafeUntil = t + rand(0.4, 0.9);
+      }
     }
 
-    // shooting
+    if (moveDir !== 0) {
+      let speed = tank.speed;
+      if (t < tank.speedUntil) speed *= SPEED_MULT;
+      tryMoveTank(tank, Math.cos(tank.angle) * speed * moveDir * DT, Math.sin(tank.angle) * speed * moveDir * DT, allTanks);
+    }
+    if (skill !== "easy" && tank.botStrafe !== 0) {
+      const perpAngle = tank.angle + Math.PI/2;
+      const strafeSpeed = tank.speed * 0.5;
+      tryMoveTank(tank, Math.cos(perpAngle) * strafeSpeed * tank.botStrafe * DT, Math.sin(perpAngle) * strafeSpeed * tank.botStrafe * DT, allTanks);
+    }
+
     tank.cooldown -= DT;
-    const cdNeeded = (t < tank.rapidUntil) ? RAPID_FIRE_COOLDOWN : FIRE_COOLDOWN;
-    if (keys.has(c.fire) && tank.cooldown <= 0) {
-      tank.cooldown = cdNeeded;
-      const muzzleDist = TANK_SIZE/2 + 8;
-      const bx = tank.x + Math.cos(tank.angle) * muzzleDist;
-      const by = tank.y + Math.sin(tank.angle) * muzzleDist;
-      bullets.push({
-        x: bx, y: by,
-        vx: Math.cos(tank.angle) * BULLET_SPEED,
-        vy: Math.sin(tank.angle) * BULLET_SPEED,
-        owner: tank,
-        life: BULLET_LIFE,
-        bounces: 0,
-      });
+    const aimGood = Math.abs(angleDiff) < (skill === "easy" ? 0.25 : skill === "medium" ? 0.15 : 0.12);
+    if (aimGood && los && d < 500) {
+      if (skill === "easy" && Math.random() < 0.02) { /* hesitate */ }
+      else fireBullet(tank);
     }
   }
 
-  function updateBullets() {
+  function updateBullets(allTanks) {
     for (const b of bullets) {
       b.life -= DT;
       let nx = b.x + b.vx * DT;
       let ny = b.y + b.vy * DT;
-
-      // bounce off canvas edges
       if (nx - BULLET_R < 0 || nx + BULLET_R > W) {
         if (b.bounces >= BULLET_MAX_BOUNCES) { b.life = 0; continue; }
-        b.vx = -b.vx; b.bounces++;
-        nx = b.x + b.vx * DT;
+        b.vx = -b.vx; b.bounces++; nx = b.x + b.vx * DT;
       }
       if (ny - BULLET_R < 0 || ny + BULLET_R > H) {
         if (b.bounces >= BULLET_MAX_BOUNCES) { b.life = 0; continue; }
-        b.vy = -b.vy; b.bounces++;
-        ny = b.y + b.vy * DT;
+        b.vy = -b.vy; b.bounces++; ny = b.y + b.vy * DT;
       }
-
-      // bounce off walls
       const br = { x: nx - BULLET_R, y: ny - BULLET_R, w: BULLET_R*2, h: BULLET_R*2 };
       for (const w of walls) {
         if (aabb(br, w)) {
           if (b.bounces >= BULLET_MAX_BOUNCES) { b.life = 0; break; }
-          // figure out which side: use previous position
-          const prevX = b.x, prevY = b.y;
-          const fromLeft  = prevX + BULLET_R <= w.x;
-          const fromRight = prevX - BULLET_R >= w.x + w.w;
-          const fromTop   = prevY + BULLET_R <= w.y;
-          const fromBot   = prevY - BULLET_R >= w.y + w.h;
+          const fromLeft = b.x + BULLET_R <= w.x;
+          const fromRight = b.x - BULLET_R >= w.x + w.w;
           if (fromLeft || fromRight) { b.vx = -b.vx; nx = b.x + b.vx * DT; }
-          else if (fromTop || fromBot) { b.vy = -b.vy; ny = b.y + b.vy * DT; }
-          else { b.vx = -b.vx; b.vy = -b.vy; nx = b.x + b.vx * DT; ny = b.y + b.vy * DT; }
-          b.bounces++;
+          else { b.vy = -b.vy; ny = b.y + b.vy * DT; }
+          b.bounces++; break;
+        }
+      }
+      b.x = nx; b.y = ny;
+
+      for (const tank of allTanks) {
+        if (tank.dead) continue;
+        if (b.owner === tank && b.life > BULLET_LIFE - 0.1) continue;
+        if (mode === "coop") {
+          if (b.ownerIsBot && tank.isBot) continue;
+          if (!b.ownerIsBot && !tank.isBot) continue;
+        }
+        if (aabb({x: b.x-BULLET_R, y: b.y-BULLET_R, w: BULLET_R*2, h: BULLET_R*2}, tankRect(tank))) {
+          if (t < tank.shieldUntil) { b.life = 0; }
+          else {
+            tank.hp -= 1; b.life = 0;
+            if (tank.hp <= 0) killTank(tank);
+          }
           break;
         }
       }
 
-      b.x = nx; b.y = ny;
-
-      // hit tanks
-      for (const tank of [p1, p2]) {
-        if (tank.hp <= 0) continue;
-        const rect = tankRect(tank);
-        if (aabb({x: b.x-BULLET_R, y: b.y-BULLET_R, w: BULLET_R*2, h: BULLET_R*2}, rect)) {
-          // can't hit yourself in first 0.1s (bullet just spawned in front of you, but just in case)
-          if (b.owner === tank && b.life > BULLET_LIFE - 0.1) continue;
-          if (t < tank.shieldUntil) {
-            // shield blocks, bullet dies
-            b.life = 0;
-          } else {
-            tank.hp -= 1;
-            b.life = 0;
-            if (tank.hp <= 0) endGame(tank === p1 ? "P2" : "P1");
+      if (b.life > 0 && !b.ownerIsBot) {
+        for (const base of bases) {
+          if (base.hp <= 0) continue;
+          if (aabb({x: b.x-BULLET_R, y: b.y-BULLET_R, w: BULLET_R*2, h: BULLET_R*2},
+                   { x: base.x, y: base.y, w: base.w, h: base.h })) {
+            base.hp -= 1; b.life = 0; break;
           }
-          break;
         }
       }
     }
     bullets = bullets.filter(b => b.life > 0);
   }
 
-  function updatePowerups() {
-    if (t >= nextPowerupAt && powerups.length < 3) {
-      spawnPowerup();
-      scheduleNextPowerup();
-    }
+  function killTank(tank) {
+    tank.dead = true;
+    if (!tank.isBot && mode === "coop") tank.respawnAt = t + RESPAWN_TIME;
+  }
 
-    // pickup
+  function scheduleNextPowerup() { nextPowerupAt = t + rand(POWERUP_SPAWN_MIN, POWERUP_SPAWN_MAX); }
+  function spawnPowerup() {
+    const types = ["speed", "rapid", "shield"];
+    const type = types[Math.floor(Math.random()*types.length)];
+    for (let i = 0; i < 30; i++) {
+      const x = rand(40, W - 40), y = rand(40, H - 40);
+      const box = { x: x-14, y: y-14, w: 28, h: 28 };
+      let ok = true;
+      for (const w of walls) if (aabb(box, w)) { ok = false; break; }
+      for (const base of bases) {
+        if (base.hp <= 0) continue;
+        if (aabb(box, { x: base.x, y: base.y, w: base.w, h: base.h })) { ok = false; break; }
+      }
+      if (ok) { powerups.push({ x, y, type, r: 14, bob: rand(0, Math.PI*2) }); return; }
+    }
+  }
+  function updatePowerups(allTanks) {
+    if (t >= nextPowerupAt && powerups.length < 3) { spawnPowerup(); scheduleNextPowerup(); }
     for (const pu of powerups) {
-      for (const tank of [p1, p2]) {
-        const dx = tank.x - pu.x, dy = tank.y - pu.y;
-        if (Math.hypot(dx, dy) < TANK_SIZE/2 + pu.r) {
-          applyPowerup(tank, pu.type);
-          pu.dead = true;
-          break;
+      for (const tank of allTanks) {
+        if (tank.dead || tank.isBot) continue;
+        if (dist(tank, pu) < tank.size/2 + pu.r) {
+          if (pu.type === "speed") tank.speedUntil = t + POWERUP_DURATION;
+          if (pu.type === "rapid") tank.rapidUntil = t + POWERUP_DURATION;
+          if (pu.type === "shield") tank.shieldUntil = t + POWERUP_DURATION;
+          pu.dead = true; break;
         }
       }
     }
     powerups = powerups.filter(p => !p.dead);
   }
 
-  function applyPowerup(tank, type) {
-    if (type === "speed") tank.speedUntil = t + POWERUP_DURATION;
-    if (type === "rapid") tank.rapidUntil = t + POWERUP_DURATION;
-    if (type === "shield") tank.shieldUntil = t + POWERUP_DURATION;
+  function drawGrid() {
+    ctx.fillStyle = "#2a3d2a"; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "rgba(0,0,0,0.08)"; ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
   }
-
-  function endGame(winner) {
-    gameOver = true;
-    winText.textContent = `${winner} WINS! 🏆`;
-    winText.style.color = winner === "P1" ? "#5DADE2" : "#EC7063";
-    ov.classList.add("show");
+  function drawWalls() {
+    for (const w of walls) {
+      ctx.fillStyle = "#4a3526"; ctx.fillRect(w.x, w.y, w.w, w.h);
+      ctx.strokeStyle = "#2e2014"; ctx.lineWidth = 2; ctx.strokeRect(w.x, w.y, w.w, w.h);
+    }
   }
+  function drawBases() {
+    for (const b of bases) {
+      if (b.hp <= 0) continue;
+      ctx.fillStyle = "#E67E22"; ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.strokeStyle = "#A04000"; ctx.lineWidth = 2; ctx.strokeRect(b.x, b.y, b.w, b.h);
+      // tower detail
+      ctx.fillStyle = "#A04000"; ctx.fillRect(b.x + 8, b.y + 8, b.w - 16, b.h - 16);
+      const pct = b.hp / b.maxHp;
+      ctx.fillStyle = "#000"; ctx.fillRect(b.x, b.y - 8, b.w, 4);
+      ctx.fillStyle = "#2ECC71"; ctx.fillRect(b.x, b.y - 8, b.w * pct, 4);
+    }
+  }
+  function drawTank(tank) {
+    if (tank.dead) return;
+    ctx.save(); ctx.translate(tank.x, tank.y); ctx.rotate(tank.angle);
+    const s = tank.size;
+    ctx.fillStyle = tank.color; ctx.fillRect(-s/2, -s/2, s, s);
+    ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.strokeRect(-s/2, -s/2, s, s);
+    ctx.fillStyle = "#222";
+    ctx.fillRect(-s/2, -s/2 - 3, s, 4);
+    ctx.fillRect(-s/2, s/2 - 1, s, 4);
+    ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(0, 0, s*0.28, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#222"; ctx.fillRect(0, -3, s/2 + 8, 6);
+    ctx.restore();
 
-  function updateHUD() {
-    const h1 = "❤".repeat(p1.hp) + "🖤".repeat(MAX_HP - p1.hp);
-    const h2 = "❤".repeat(p2.hp) + "🖤".repeat(MAX_HP - p2.hp);
-    const pu1 = activeIcons(p1);
-    const pu2 = activeIcons(p2);
-    hud1.innerHTML = `P1 (WASD + Space) ${h1} ${pu1}`;
-    hud2.innerHTML = `P2 (Arrows + Enter) ${h2} ${pu2}`;
+    if (t < tank.shieldUntil) {
+      ctx.strokeStyle = "rgba(120, 200, 255, 0.8)"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(tank.x, tank.y, tank.size/2 + 6 + Math.sin(t*8)*1.5, 0, Math.PI*2); ctx.stroke();
+    }
+    if (tank.isBot && tank.maxHp > 1) {
+      const bw = tank.size, bh = 4;
+      const pct = tank.hp / tank.maxHp;
+      ctx.fillStyle = "#000"; ctx.fillRect(tank.x - bw/2, tank.y - tank.size/2 - 10, bw, bh);
+      ctx.fillStyle = tank.isBoss ? "#9B59B6" : "#E74C3C";
+      ctx.fillRect(tank.x - bw/2, tank.y - tank.size/2 - 10, bw * pct, bh);
+    }
+  }
+  function drawRespawn(tank) {
+    if (!tank.dead || tank.isBot) return;
+    const left = Math.max(0, tank.respawnAt - t);
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.font = "bold 14px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText(`Respawn ${left.toFixed(1)}s`, tank.spawnX, tank.spawnY);
+  }
+  function drawBullets() {
+    for (const b of bullets) {
+      ctx.fillStyle = b.ownerIsBot ? "#FF6B6B" : "#FFD93D";
+      ctx.beginPath(); ctx.arc(b.x, b.y, BULLET_R, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = "#000"; ctx.lineWidth = 1; ctx.stroke();
+    }
+  }
+  function drawPowerups() {
+    for (const pu of powerups) {
+      const bob = Math.sin(t*3 + pu.bob) * 2;
+      const colors = { speed: "#F1C40F", rapid: "#E67E22", shield: "#5DADE2" };
+      const icons = { speed: "⚡", rapid: "🔫", shield: "🛡" };
+      ctx.fillStyle = colors[pu.type];
+      ctx.beginPath(); ctx.arc(pu.x, pu.y + bob, pu.r, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.stroke();
+      ctx.font = "16px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(icons[pu.type], pu.x, pu.y + bob + 1);
+    }
   }
 
   function activeIcons(tank) {
     let s = "";
-    if (t < tank.speedUntil)  s += " ⚡";
-    if (t < tank.rapidUntil)  s += " 🔫";
+    if (t < tank.speedUntil) s += " ⚡";
+    if (t < tank.rapidUntil) s += " 🔫";
     if (t < tank.shieldUntil) s += " 🛡";
     return s;
   }
+  function updateHUD() {
+    const p1 = players[0], p2 = players[1];
+    const h1 = p1.dead ? "💀" : ("❤".repeat(p1.hp) + "🖤".repeat(p1.maxHp - p1.hp));
+    const h2 = p2.dead ? "💀" : ("❤".repeat(p2.hp) + "🖤".repeat(p2.maxHp - p2.hp));
+    hud1.innerHTML = `P1 (WASD) ${h1}${activeIcons(p1)}`;
+    hud2.innerHTML = `P2 (Arrows) ${h2}${activeIcons(p2)}`;
+    if (mode === "coop") {
+      const m = missions[missionIdx];
+      banner.textContent = `${m.title}  •  ${m.banner()}`;
+      banner.style.display = "block";
+    } else {
+      banner.style.display = "none";
+    }
+  }
 
-  again.addEventListener("click", reset);
+  function setupPlayers() {
+    if (mode === "1v1") {
+      players = [
+        makeTank({ x: 80, y: H/2, angle: 0, color: "#3498DB",
+          controls: { up: "w", down: "s", left: "a", right: "d", fire: " " }}),
+        makeTank({ x: W - 80, y: H/2, angle: Math.PI, color: "#E74C3C",
+          controls: { up: "ArrowUp", down: "ArrowDown", left: "ArrowLeft", right: "ArrowRight", fire: "Enter" }}),
+      ];
+    } else {
+      players = [
+        makeTank({ x: 100, y: H - 100, angle: -Math.PI/2, color: "#3498DB",
+          controls: { up: "w", down: "s", left: "a", right: "d", fire: " " }}),
+        makeTank({ x: 160, y: H - 100, angle: -Math.PI/2, color: "#2ECC71",
+          controls: { up: "ArrowUp", down: "ArrowDown", left: "ArrowLeft", right: "ArrowRight", fire: "Enter" }}),
+      ];
+    }
+  }
+
+  function start1v1() {
+    mode = "1v1"; state = "playing"; t = 0; endShown = false;
+    walls = buildArenaWalls();
+    bullets = []; powerups = []; bots = []; bases = []; boss = null;
+    scheduleNextPowerup();
+    setupPlayers();
+    hideOverlays();
+    showGameUI();
+  }
+  function startCoop(idx) {
+    mode = "coop"; missionIdx = idx; state = "briefing";
+    const m = missions[idx];
+    briefTitle.textContent = m.title;
+    briefDesc.textContent = m.desc;
+    hideGameUI();
+    showOverlay(briefing);
+  }
+  function beginMission() {
+    state = "playing"; t = 0; endShown = false;
+    bullets = []; powerups = [];
+    scheduleNextPowerup();
+    setupPlayers();
+    missions[missionIdx].setup();
+    hideOverlays();
+    showGameUI();
+  }
+  function showGameUI() { hudEl.style.display = "flex"; ctrlHint.style.display = "block"; }
+  function hideGameUI() { hudEl.style.display = "none"; ctrlHint.style.display = "none"; banner.style.display = "none"; }
+  function hideOverlays() {
+    menu.classList.remove("show");
+    briefing.classList.remove("show");
+    endScreen.classList.remove("show");
+  }
+  function showOverlay(el) { hideOverlays(); el.classList.add("show"); }
+
+  function showEnd(title, desc, hasNext) {
+    if (endShown) return;
+    endShown = true;
+    state = "end";
+    hideGameUI();
+    endTitle.textContent = title;
+    endDesc.textContent = desc;
+    btnContinue.style.display = hasNext ? "inline-block" : "none";
+    btnAgain.textContent = mode === "coop" ? "Herstart missie" : "Opnieuw spelen";
+    showOverlay(endScreen);
+  }
 
   function update() {
-    if (gameOver) return;
+    if (state !== "playing") return;
     t += DT;
-    updateTank(p1);
-    updateTank(p2);
-    updateBullets();
-    updatePowerups();
+    const allTanks = [...players, ...bots];
+    if (boss) allTanks.push(boss);
+
+    for (const p of players) updatePlayer(p, allTanks);
+    for (const b of bots) updateBot(b, allTanks);
+    if (boss) updateBot(boss, allTanks);
+    updateBullets(allTanks);
+    updatePowerups(allTanks);
+
+    if (mode === "1v1") {
+      if (players[0].hp <= 0 && !players[0].dead) killTank(players[0]);
+      if (players[1].hp <= 0 && !players[1].dead) killTank(players[1]);
+      if (players[0].dead && !players[1].dead) showEnd("🏆 P2 WINT!", "Goed gespeeld.", false);
+      else if (players[1].dead && !players[0].dead) showEnd("🏆 P1 WINT!", "Goed gespeeld.", false);
+    } else {
+      // both dead at same time = lose (rare); main lose = both currently dead waiting
+      const bothDead = players[0].dead && players[1].dead;
+      if (bothDead) {
+        showEnd("💥 Missie mislukt", "Beide tanks vernietigd. Probeer het opnieuw.", false);
+        return;
+      }
+      const result = missions[missionIdx].update();
+      if (result === "win") {
+        const hasNext = missionIdx < missions.length - 1;
+        if (hasNext) showEnd("✅ Missie voltooid!", "Klaar voor de volgende?", true);
+        else showEnd("🏆 CAMPAGNE VOLBRACHT!", "Jullie hebben alle missies overleefd. Petje af, commandanten!", false);
+      }
+    }
+
+    bots = bots.filter(b => !b.dead);
     updateHUD();
   }
 
-  // -- Drawing --
-  function drawWalls() {
-    for (const w of walls) {
-      ctx.fillStyle = "#4a3526";
-      ctx.fillRect(w.x, w.y, w.w, w.h);
-      ctx.strokeStyle = "#2e2014";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(w.x, w.y, w.w, w.h);
-    }
-  }
-
-  function drawTank(tank) {
-    if (tank.hp <= 0) return;
-    ctx.save();
-    ctx.translate(tank.x, tank.y);
-    ctx.rotate(tank.angle);
-
-    // body
-    ctx.fillStyle = tank.color;
-    ctx.fillRect(-TANK_SIZE/2, -TANK_SIZE/2, TANK_SIZE, TANK_SIZE);
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(-TANK_SIZE/2, -TANK_SIZE/2, TANK_SIZE, TANK_SIZE);
-
-    // tracks
-    ctx.fillStyle = "#222";
-    ctx.fillRect(-TANK_SIZE/2, -TANK_SIZE/2 - 3, TANK_SIZE, 4);
-    ctx.fillRect(-TANK_SIZE/2, TANK_SIZE/2 - 1, TANK_SIZE, 4);
-
-    // turret
-    ctx.fillStyle = "#333";
-    ctx.beginPath();
-    ctx.arc(0, 0, 8, 0, Math.PI*2);
-    ctx.fill();
-
-    // barrel
-    ctx.fillStyle = "#222";
-    ctx.fillRect(0, -3, TANK_SIZE/2 + 8, 6);
-
-    ctx.restore();
-
-    // shield aura
-    if (t < tank.shieldUntil) {
-      ctx.strokeStyle = "rgba(120, 200, 255, 0.8)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(tank.x, tank.y, TANK_SIZE/2 + 6 + Math.sin(t*8)*1.5, 0, Math.PI*2);
-      ctx.stroke();
-    }
-  }
-
-  function drawBullets() {
-    for (const b of bullets) {
-      ctx.fillStyle = "#FFD93D";
-      ctx.beginPath();
-      ctx.arc(b.x, b.y, BULLET_R, 0, Math.PI*2);
-      ctx.fill();
-      ctx.strokeStyle = "#000";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-  }
-
-  function drawPowerups() {
-    for (const pu of powerups) {
-      const bob = Math.sin(t*3 + pu.bob) * 2;
-      const colorMap = { speed: "#F1C40F", rapid: "#E67E22", shield: "#5DADE2" };
-      const iconMap  = { speed: "⚡",     rapid: "🔫",     shield: "🛡" };
-      ctx.fillStyle = colorMap[pu.type];
-      ctx.beginPath();
-      ctx.arc(pu.x, pu.y + bob, pu.r, 0, Math.PI*2);
-      ctx.fill();
-      ctx.strokeStyle = "#000";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.font = "16px system-ui";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(iconMap[pu.type], pu.x, pu.y + bob + 1);
-    }
-  }
-
   function draw() {
-    // background grid
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = "#2a3d2a";
-    ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = "rgba(0,0,0,0.08)";
-    ctx.lineWidth = 1;
-    for (let x = 0; x < W; x += 40) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-    }
-    for (let y = 0; y < H; y += 40) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-    }
-
+    drawGrid();
     drawWalls();
+    drawBases();
     drawPowerups();
     drawBullets();
-    drawTank(p1);
-    drawTank(p2);
+    for (const b of bots) drawTank(b);
+    if (boss) drawTank(boss);
+    for (const p of players) { drawTank(p); drawRespawn(p); }
   }
 
-  function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
-  }
+  function loop() { update(); draw(); requestAnimationFrame(loop); }
 
-  reset();
+  document.getElementById("btn1v1").onclick = () => start1v1();
+  document.getElementById("btnCoop").onclick = () => startCoop(0);
+  document.getElementById("btnStartMission").onclick = () => beginMission();
+  btnContinue.onclick = () => startCoop(missionIdx + 1);
+  btnAgain.onclick = () => { if (mode === "1v1") start1v1(); else { state = "briefing"; beginMission(); } };
+  btnMenu.onclick = () => { hideGameUI(); state = "menu"; showOverlay(menu); };
+
   loop();
 })();
 </script>
