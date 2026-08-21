@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Management Drives | Klaas de Jager</title>
+<meta name="description" content="Mijn profiel van Management Drives: rood, oranje en geel dominant. Waar mijn kracht zit, waar ik energie van krijg en wat je aan me hebt in een team.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14181d;
+    --ink-soft:#4d555f;
+    --paper:#f7f8f9;
+    --card:#ffffff;
+    --rule:#dbdfe4;
+    --blueprint:#1b4c7e;
+    --tint:#e8eef4;
+    --display:"Archivo",system-ui,sans-serif;
+    --body:"Source Serif 4",Georgia,serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --gap:clamp(64px,8vw,120px);
+    /* kleuren van Management Drives */
+    --md-red:#cf1441;
+    --md-orange:#ee7b3c;
+    --md-yellow:#f2c832;
+    --md-green:#0f9d63;
+    --md-blue:#00539f;
+    --md-purple:#7c4ea8;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{width:min(1080px,90vw);margin-inline:auto}
+  a{color:inherit}
+  :focus-visible{outline:2px solid var(--blueprint);outline-offset:3px}
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--blueprint)}
+
+  header{border-bottom:1px solid var(--rule);background:var(--paper);position:sticky;top:0;z-index:10}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:18px 0}
+  .mark{font-family:var(--display);font-weight:600;letter-spacing:-.01em;font-size:16px;text-decoration:none}
+  nav{display:flex;gap:26px;align-items:center;font-family:var(--mono);font-size:12px;letter-spacing:.06em}
+  nav a{text-decoration:none;color:var(--ink-soft)}
+  nav a:hover{color:var(--blueprint)}
+  .lang{border-left:1px solid var(--rule);padding-left:26px;color:var(--ink-soft)}
+  .lang a{text-decoration:none;color:var(--ink-soft)}
+  .lang a:hover{color:var(--blueprint)}
+  .lang b{color:var(--ink);font-weight:500}
+
+  /* ---------- knoppen ---------- */
+  .actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:34px}
+  .btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;padding:14px 22px;border:1px solid var(--blueprint);transition:background .18s,color .18s,border-color .18s}
+  .btn.solid{background:var(--blueprint);color:#fff}
+  .btn.solid:hover{background:var(--ink);border-color:var(--ink)}
+  .btn.ghost{color:var(--blueprint)}
+  .btn.ghost:hover{background:var(--tint)}
+  .btn svg{width:14px;height:14px;flex:none}
+
+  /* ---------- kop ---------- */
+  .hero{padding:clamp(48px,7vw,88px) 0 clamp(40px,5vw,64px)}
+  .back{display:inline-block;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);text-decoration:none;margin-bottom:34px}
+  .back:hover{color:var(--blueprint)}
+  .back span{display:inline-block;transition:transform .2s}
+  .back:hover span{transform:translateX(-4px)}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(36px,5.6vw,64px);line-height:1.02;letter-spacing:-.03em;margin:16px 0 0}
+  .lead{max-width:36em;margin:24px 0 0;font-size:clamp(18px,1.9vw,21px);line-height:1.55;color:var(--ink-soft)}
+
+  .facts{display:grid;grid-template-columns:repeat(3,1fr);margin-top:52px;border-top:1px solid var(--rule)}
+  .fact{padding:22px 26px 0;border-left:1px solid var(--rule)}
+  .fact:first-child{padding-left:0;border-left:0}
+  .fact b{display:block;font-family:var(--display);font-weight:500;font-size:20px;letter-spacing:-.01em;margin-top:8px}
+  .fact span{font-size:15px;color:var(--ink-soft)}
+
+  /* ---------- secties ---------- */
+  section{padding-block:var(--gap);border-top:1px solid var(--rule)}
+  .head{margin-bottom:48px}
+  .head .label{margin:0 0 14px}
+  .head p.note{margin:18px 0 0;color:var(--ink-soft);font-size:17px;max-width:40em}
+  h2{font-family:var(--display);font-weight:500;font-size:clamp(26px,3.2vw,36px);letter-spacing:-.02em;margin:0;max-width:24em;line-height:1.15}
+
+  .cols{display:grid;grid-template-columns:repeat(3,1fr)}
+  .col{padding:0 32px;border-left:1px solid var(--rule)}
+  .col:first-child{padding-left:0;border-left:0}
+  .col h3{font-family:var(--display);font-weight:500;font-size:19px;letter-spacing:-.01em;margin:14px 0 10px}
+  .col p{margin:0;color:var(--ink-soft);font-size:16px}
+  .col p + p{margin-top:12px;padding-top:12px;border-top:1px solid var(--rule);font-size:15.5px}
+
+  .blocks{display:grid;gap:20px}
+  .block{background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--c,var(--blueprint));padding:26px 30px 28px}
+  .block .meta{display:flex;align-items:baseline;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--blueprint)}
+  .block .meta em{font-style:normal;color:var(--ink-soft)}
+  .block h3{font-family:var(--display);font-weight:500;font-size:22px;letter-spacing:-.015em;margin:12px 0 8px}
+  .block p{margin:0;color:var(--ink-soft);font-size:16px;max-width:52em}
+  .block ul{margin:16px 0 0;padding:0;list-style:none}
+  .block li{position:relative;padding-left:26px;margin-top:14px;color:var(--ink-soft);font-size:16px}
+  .block li::before{content:"";position:absolute;left:0;top:8px;width:11px;height:11px;border-radius:50%;background:var(--dot,var(--blueprint))}
+  .block li b{color:var(--ink);font-weight:600}
+
+  /* ---------- drijfveren ---------- */
+  .drives{margin-top:8px}
+  .drive{display:grid;grid-template-columns:36px 1fr;gap:22px;padding:20px 0;border-top:1px solid var(--rule)}
+  .drive .n{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--c);color:#fff;font-family:var(--mono);font-size:13px;line-height:1}
+  .drive.geel .n{color:#3d3208}
+  .drive h3{font-family:var(--display);font-weight:500;font-size:19px;letter-spacing:-.01em;margin:6px 0 6px}
+  .drive p{margin:0;color:var(--ink-soft);font-size:16px;max-width:46em}
+
+  /* ---------- download ---------- */
+  .download{background:var(--card);border:1px solid var(--rule);padding:clamp(28px,4vw,44px);display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center}
+  .download h2{max-width:20em}
+  .download p{margin:14px 0 0;color:var(--ink-soft);font-size:16px;max-width:40em}
+  .download .actions{margin-top:0}
+
+  footer{border-top:1px solid var(--rule);padding:26px 0 44px;font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+  .rise{opacity:0;transform:translateY(14px);animation:rise .7s cubic-bezier(.2,.7,.3,1) forwards}
+  .rise:nth-child(2){animation-delay:.06s}
+  .rise:nth-child(3){animation-delay:.12s}
+  @keyframes rise{to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){
+    .rise{animation:none;opacity:1;transform:none}
+    html{scroll-behavior:auto}
+  }
+
+  @media (max-width:880px){
+    .head{margin-bottom:32px}
+    .cols{grid-template-columns:1fr}
+    .col{padding:22px 0;border-left:0;border-top:1px solid var(--rule)}
+    .col:first-child{border-top:0;padding-top:0}
+    .facts{grid-template-columns:1fr}
+    .fact{padding:20px 0 0;border-left:0;border-top:1px solid var(--rule)}
+    .fact:first-child{border-top:0}
+    .block{padding:22px 22px 24px}
+    .download{grid-template-columns:1fr}
+    nav a[href$="#achtergrond"],nav a[href$="#opleidingen"]{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="mark" href="index.html">Klaas de Jager</a>
+    <nav>
+      <a href="managementdrives.html" aria-current="page">Profiel</a>
+      <a href="index.html#achtergrond">Achtergrond</a>
+      <a href="index.html#opleidingen">Opleidingen</a>
+      <a href="index.html#ervaring">Ervaring</a>
+      <a href="index.html#contact">Contact</a>
+      <span class="lang"><a href="../managementdrives.html">EN</a> / <b>NL</b></span>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <div class="wrap hero">
+    <a class="back" href="index.html#contact"><span>←</span> Terug naar overzicht</a>
+    <p class="label rise">Drijfverenprofiel · Management Drives</p>
+    <h1 class="rise">Rood, oranje<br>en geel.</h1>
+    <p class="lead rise">Management Drives meet niet wat je kunt, maar waar je energie vandaan komt. Mijn profiel is uitgesproken: drie drijfveren domineren. Dat maakt vooraf duidelijk wat je aan me hebt.</p>
+
+    <div class="actions">
+      <a class="btn solid" href="../management-drives-klaas-de-jager.pdf" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>
+        Download volledig profiel
+      </a>
+      <a class="btn ghost" href="#samenwerking">Wat dat betekent in een team</a>
+    </div>
+
+    <div class="facts">
+      <div class="fact">
+        <p class="label">Dominant</p>
+        <b>Rood · Oranje · Geel</b>
+        <span>Actie, resultaat, inzicht</span>
+      </div>
+      <div class="fact">
+        <p class="label">Energie van</p>
+        <b>Doel, vaart en inzicht</b>
+        <span>Een helder doel en ruimte om te bewegen</span>
+      </div>
+      <div class="fact">
+        <p class="label">Op mijn best</p>
+        <b>Als het moet gebeuren</b>
+        <span>Knopen doorhakken en resultaat neerzetten</span>
+      </div>
+    </div>
+  </div>
+
+  <section id="profiel">
+    <div class="wrap">
+      <div class="head">
+        <h2>De volgorde waarin ik werk.</h2>
+        <p class="note">Management Drives kent zes drijfveren. Niet welke je hebt telt, maar in welke volgorde ze aangaan. Bij mij ziet die logica er zo uit.</p>
+      </div>
+
+      <div class="drives">
+        <div class="drive" style="--c:var(--md-red)">
+          <div class="n">1</div>
+          <div>
+            <h3>Rood: lef, tempo en kracht</h3>
+            <p>Actie komt eerst: knopen doorhakken, vaart maken en er staan op het moment dat het spannend wordt.</p>
+          </div>
+        </div>
+
+        <div class="drive" style="--c:var(--md-orange)">
+          <div class="n">2</div>
+          <div>
+            <h3>Oranje: doelgericht en scherp op de route</h3>
+            <p>Zodra de beweging er is, komt het doel scherp in beeld: wat willen we bereiken, en wat is de snelste route ernaartoe.</p>
+          </div>
+        </div>
+
+        <div class="drive geel" style="--c:var(--md-yellow)">
+          <div class="n">3</div>
+          <div>
+            <h3>Geel: analyseren en bijsturen</h3>
+            <p>Tijdens het rijden de motor bijstellen: begrijpen waarom iets werkt, en het aanpassen zodra het beter kan.</p>
+          </div>
+        </div>
+
+        <div class="drive" style="--c:var(--md-blue)">
+          <div class="n">4</div>
+          <div>
+            <h3>Blauw: structuur en afronden</h3>
+            <p>Structuur is voor mij een middel: ik zet het in als het helpt om iets echt af te maken.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="kracht">
+    <div class="wrap">
+      <div class="head">
+        <h2>Waar mijn kracht zit.</h2>
+        <p class="note">Wat de drie dominante drijfveren in de praktijk opleveren.</p>
+      </div>
+      <div class="cols">
+        <div class="col">
+          <p class="label" style="color:var(--md-red)">Rood</p>
+          <h3>Actie en tempo</h3>
+          <p>Beweging creëren en duidelijke besluiten nemen, ook als het ongemakkelijk wordt.</p>
+        </div>
+        <div class="col">
+          <p class="label" style="color:var(--md-orange)">Oranje</p>
+          <h3>Resultaatgerichtheid</h3>
+          <p>Streven naar vooruitgang en prestatie, en een doel omzetten in zichtbaar resultaat.</p>
+        </div>
+        <div class="col">
+          <p class="label" style="color:#b8981f">Geel</p>
+          <h3>Begrijpen en leren</h3>
+          <p>Echt willen doorgronden, grondig afwegen en blijven bijleren.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="energie">
+    <div class="wrap">
+      <div class="head">
+        <h2>Waar ik energie van krijg.</h2>
+        <p class="note">Drie drijfveren leveren me op termijn energie op. Worden die bediend, dan gaat het werk vanzelf sneller.</p>
+      </div>
+      <div class="blocks">
+        <div class="block" style="--c:var(--md-orange)">
+          <div class="meta"><span>Geeft energie</span><em>3 drijfveren</em></div>
+          <h3>Doel, vaart en inzicht</h3>
+          <ul>
+            <li style="--dot:var(--md-orange)"><b>Oranje.</b> Resultaat halen en waardering krijgen, in een ambitieuze omgeving waarin mensen zich kunnen onderscheiden.</li>
+            <li style="--dot:var(--md-red)"><b>Rood.</b> Vaart maken en besluiten nemen met wederzijds respect: stevig met en voor elkaar, in een omgeving waar duidelijkheid heerst.</li>
+            <li style="--dot:var(--md-yellow)"><b>Geel.</b> Nieuwe inzichten, zeker als iets fundamenteel klopt. Een omgeving die inspireert en vrijheid geeft.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="samenwerking">
+    <div class="wrap">
+      <div class="head">
+        <h2>Wat dit betekent als we samenwerken.</h2>
+      </div>
+      <div class="blocks">
+        <div class="block" style="--c:var(--blueprint)">
+          <div class="meta"><span>Kort samengevat</span><em>Voor collega's</em></div>
+          <h3>Wat ik meebreng, en waar ik tegengas bij nodig heb</h3>
+          <p>Ik ben gericht op actie, gecombineerd met ambitie: ik wil echt iets bereiken en pak verantwoordelijkheid als het moet gebeuren. Wat ik van een team waardeer is tegengas: iemand die me eraan herinnert dat afstemmen geen vertraging is, en dat zekerheid en vertrouwen voor anderen zwaarder wegen dan voor mij.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="download">
+    <div class="wrap">
+      <div class="download">
+        <div>
+          <p class="label">Volledig rapport</p>
+          <h2>Het complete profiel van Management Drives.</h2>
+          <p>Het originele rapport met logica, afwijzing, energiebalans en mindset, 23 februari 2026. PDF, 2 pagina's.</p>
+        </div>
+        <div class="actions">
+          <a class="btn solid" href="../management-drives-klaas-de-jager.pdf" download>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>
+            Download PDF
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <span>© <span id="jaar">2026</span> Klaas de Jager</span>
+  <span><a href="index.html" style="text-decoration:none">Terug naar overzicht</a></span>
+</footer>
+
+<script>document.getElementById('jaar').textContent=new Date().getFullYear();</script>
+</body>
+</html>

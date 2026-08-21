@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A. Hak, work preparation in underground infrastructure | Klaas de Jager</title>
+<meta name="description" content="Six months as work preparation engineer at A. Hak in Purmerend: work plans and cost calculations for cable and pipeline projects, coordination with execution, and safety to VCA VOL level.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14181d;
+    --ink-soft:#4d555f;
+    --paper:#f7f8f9;
+    --card:#ffffff;
+    --rule:#dbdfe4;
+    --blueprint:#1b4c7e;
+    --tint:#e8eef4;
+    --display:"Archivo",system-ui,sans-serif;
+    --body:"Source Serif 4",Georgia,serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --gap:clamp(64px,8vw,120px);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{width:min(1080px,90vw);margin-inline:auto}
+  a{color:inherit}
+  :focus-visible{outline:2px solid var(--blueprint);outline-offset:3px}
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--blueprint)}
+
+  header{border-bottom:1px solid var(--rule);background:var(--paper);position:sticky;top:0;z-index:10}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:18px 0}
+  .mark{font-family:var(--display);font-weight:600;letter-spacing:-.01em;font-size:16px;text-decoration:none}
+  nav{display:flex;gap:26px;align-items:center;font-family:var(--mono);font-size:12px;letter-spacing:.06em}
+  nav a{text-decoration:none;color:var(--ink-soft)}
+  nav a:hover{color:var(--blueprint)}
+  .lang{border-left:1px solid var(--rule);padding-left:26px;color:var(--ink-soft)}
+  .lang a{text-decoration:none;color:var(--ink-soft)}
+  .lang a:hover{color:var(--blueprint)}
+  .lang b{color:var(--ink);font-weight:500}
+
+  /* ---------- kop ---------- */
+  .hero{padding:clamp(48px,7vw,88px) 0 clamp(40px,5vw,64px)}
+  .back{display:inline-block;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);text-decoration:none;margin-bottom:34px}
+  .back:hover{color:var(--blueprint)}
+  .back span{display:inline-block;transition:transform .2s}
+  .back:hover span{transform:translateX(-4px)}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(36px,5.6vw,64px);line-height:1.02;letter-spacing:-.03em;margin:16px 0 0}
+  .lead{max-width:36em;margin:24px 0 0;font-size:clamp(18px,1.9vw,21px);line-height:1.55;color:var(--ink-soft)}
+
+  .facts{display:grid;grid-template-columns:repeat(4,1fr);margin-top:52px;border-top:1px solid var(--rule)}
+  .fact{padding:22px 26px 0;border-left:1px solid var(--rule)}
+  .fact:first-child{padding-left:0;border-left:0}
+  .fact b{display:block;font-family:var(--display);font-weight:500;font-size:20px;letter-spacing:-.01em;margin-top:8px}
+  .fact span{font-size:15px;color:var(--ink-soft)}
+
+  /* ---------- secties ---------- */
+  section{padding-block:var(--gap);border-top:1px solid var(--rule)}
+  .head{margin-bottom:48px}
+  .head .label{margin:0 0 14px}
+  .head p.note{margin:18px 0 0;color:var(--ink-soft);font-size:17px;max-width:40em}
+  h2{font-family:var(--display);font-weight:500;font-size:clamp(26px,3.2vw,36px);letter-spacing:-.02em;margin:0;max-width:24em;line-height:1.15}
+
+  .cols{display:grid;grid-template-columns:repeat(3,1fr)}
+  .col{padding:0 32px;border-left:1px solid var(--rule)}
+  .col:first-child{padding-left:0;border-left:0}
+  .col h3{font-family:var(--display);font-weight:500;font-size:19px;letter-spacing:-.01em;margin:14px 0 10px}
+  .col p{margin:0;color:var(--ink-soft);font-size:16px}
+
+  /* ---------- opsomming ---------- */
+  .list{margin:0;padding:0;list-style:none;border-top:1px solid var(--rule)}
+  .list li{display:grid;grid-template-columns:200px 1fr;gap:28px;padding:18px 0;border-bottom:1px solid var(--rule);color:var(--ink-soft);font-size:16px}
+  .list b{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--blueprint);font-weight:400;padding-top:4px}
+  .list p{margin:0;max-width:48em}
+
+  footer{border-top:1px solid var(--rule);padding:26px 0 44px;font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+  .rise{opacity:0;transform:translateY(14px);animation:rise .7s cubic-bezier(.2,.7,.3,1) forwards}
+  .rise:nth-child(2){animation-delay:.06s}
+  .rise:nth-child(3){animation-delay:.12s}
+  @keyframes rise{to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){
+    .rise{animation:none;opacity:1;transform:none}
+    html{scroll-behavior:auto}
+  }
+
+  @media (max-width:880px){
+    .head{margin-bottom:32px}
+    .cols{grid-template-columns:1fr}
+    .col{padding:22px 0;border-left:0;border-top:1px solid var(--rule)}
+    .col:first-child{border-top:0;padding-top:0}
+    .facts{grid-template-columns:repeat(2,1fr)}
+    .fact{padding:22px 0 0;border-left:0}
+    .fact:nth-child(2n){padding-left:26px;border-left:1px solid var(--rule)}
+    .list li{grid-template-columns:1fr;gap:6px}
+    nav a[href$="#background"],nav a[href$="#education"]{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="mark" href="index.html">Klaas de Jager</a>
+    <nav>
+      <a href="managementdrives.html">Profile</a>
+      <a href="index.html#background">Background</a>
+      <a href="index.html#education">Education</a>
+      <a href="index.html#experience">Experience</a>
+      <a href="index.html#contact">Contact</a>
+      <span class="lang"><b>EN</b> / <a href="nl/hak.html">NL</a></span>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <div class="wrap hero">
+    <a class="back" href="index.html#experience"><span>←</span> Back to overview</a>
+    <p class="label rise">A. Hak Purmerend · Work preparation · 2025</p>
+    <h1 class="rise">Before a single<br>metre is dug.</h1>
+    <p class="lead rise">Six months as work preparation engineer at A. Hak, a contractor in underground infrastructure. Cable and pipeline projects demand tight preparation: drawings, permits, materials, planning and safety all have to be right before the crew goes into the street.</p>
+
+    <div class="facts">
+      <div class="fact">
+        <p class="label">Period</p>
+        <b>Six months</b>
+        <span>2025</span>
+      </div>
+      <div class="fact">
+        <p class="label">Role</p>
+        <b>Work preparation</b>
+        <span>Link between office and site</span>
+      </div>
+      <div class="fact">
+        <p class="label">Field</p>
+        <b>Underground infra</b>
+        <span>Cables and pipelines</span>
+      </div>
+      <div class="fact">
+        <p class="label">Obtained</p>
+        <b>VCA VOL</b>
+        <span>Dutch safety certification</span>
+      </div>
+    </div>
+  </div>
+
+  <section id="context">
+    <div class="wrap">
+      <div class="head">
+        <h2>A project is won or lost at the office.</h2>
+        <p class="note">Whatever is wrong in the preparation comes back on site: incorrect quantities, material that has not arrived, a crew standing still. An hour of checking at the office is cheaper than a day of waiting with an excavator on the clock, and that is exactly what work preparation is about.</p>
+      </div>
+      <div class="cols">
+        <div class="col">
+          <p class="label">Working out</p>
+          <h3>Work plans and calculations</h3>
+          <p>Translating supplied designs and client information into how many metres of pipe or cable are needed, where excavation sits, which materials to order, and which steps the crew takes on site.</p>
+        </div>
+        <div class="col">
+          <p class="label">Coordinating</p>
+          <h3>The office and the crews</h3>
+          <p>Close contact with supervisors and fitters to keep the preparation aligned with practice: matching planning, discussing bottlenecks and clarifying information, so there are as few surprises on site as possible.</p>
+        </div>
+        <div class="col">
+          <p class="label">Safety</p>
+          <h3>Permits and VCA VOL</h3>
+          <p>Working underground is about controlling risk: utility location requests, working alongside roads and digging near existing cables and pipelines. I obtained my VCA VOL certification and translated those principles into concrete arrangements in the preparation.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="learned">
+    <div class="wrap">
+      <div class="head">
+        <h2>What I learned here.</h2>
+      </div>
+      <ul class="list">
+        <li><b>Quantities and cost</b><p>Turning metres, materials and hours into a calculation and an order list, where a miscalculated quantity feeds straight through into the cost of the project.</p></li>
+        <li><b>Structure in detail</b><p>Reducing drawings, utility companies, residents, materials and planning to information in which a supervisor sees at a glance what has to happen where and when.</p></li>
+        <li><b>Office and site</b><p>Not just emailing, but calling, probing and making arrangements concrete, which is how misunderstandings in the field are actually prevented.</p></li>
+        <li><b>Setting priorities</b><p>Several projects at once, with weather, deliveries and client changes as variables: deciding which information is needed first and adjusting when the situation shifts.</p></li>
+        <li><b>Ownership</b><p>The quality of the preparation determines how execution runs: double checking, preventing errors and flagging in time when something does not add up.</p></li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <span>© <span id="jaar">2026</span> Klaas de Jager</span>
+  <span><a href="index.html" style="text-decoration:none">Back to overview</a></span>
+</footer>
+
+<script>document.getElementById('jaar').textContent=new Date().getFullYear();</script>
+</body>
+</html>
