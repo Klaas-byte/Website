@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MSc Management | Klaas de Jager</title>
+<meta name="description" content="MSc Management aan Nyenrode Business University, met de track Financial Management: waardering, financiering en kapitaalmarkten.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14181d;
+    --ink-soft:#4d555f;
+    --paper:#f7f8f9;
+    --card:#ffffff;
+    --rule:#dbdfe4;
+    --blueprint:#1b4c7e;
+    --tint:#e8eef4;
+    --display:"Archivo",system-ui,sans-serif;
+    --body:"Source Serif 4",Georgia,serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --gap:clamp(64px,8vw,120px);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{width:min(1080px,90vw);margin-inline:auto}
+  a{color:inherit}
+  :focus-visible{outline:2px solid var(--blueprint);outline-offset:3px}
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--blueprint)}
+
+  header{border-bottom:1px solid var(--rule);background:var(--paper);position:sticky;top:0;z-index:10}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:18px 0}
+  .mark{font-family:var(--display);font-weight:600;letter-spacing:-.01em;font-size:16px;text-decoration:none}
+  nav{display:flex;gap:26px;align-items:center;font-family:var(--mono);font-size:12px;letter-spacing:.06em}
+  nav a{text-decoration:none;color:var(--ink-soft)}
+  nav a:hover{color:var(--blueprint)}
+  .lang{border-left:1px solid var(--rule);padding-left:26px;color:var(--ink-soft)}
+  .lang a{text-decoration:none;color:var(--ink-soft)}
+  .lang a:hover{color:var(--blueprint)}
+  .lang b{color:var(--ink);font-weight:500}
+
+  /* ---------- knoppen ---------- */
+  .actions{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:34px}
+  .btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;padding:14px 22px;border:1px solid var(--blueprint);transition:background .18s,color .18s,border-color .18s}
+  .btn.ghost{color:var(--blueprint)}
+  .btn.ghost:hover{background:var(--tint)}
+  .btn svg{width:14px;height:14px;flex:none}
+  .fine{margin:0;font-size:14.5px;color:var(--ink-soft);max-width:30em}
+
+  /* ---------- kop ---------- */
+  .hero{padding:clamp(48px,7vw,88px) 0 clamp(40px,5vw,64px)}
+  .back{display:inline-block;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);text-decoration:none;margin-bottom:34px}
+  .back:hover{color:var(--blueprint)}
+  .back span{display:inline-block;transition:transform .2s}
+  .back:hover span{transform:translateX(-4px)}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(36px,5.6vw,64px);line-height:1.02;letter-spacing:-.03em;margin:16px 0 0}
+  .lead{max-width:36em;margin:24px 0 0;font-size:clamp(18px,1.9vw,21px);line-height:1.55;color:var(--ink-soft)}
+
+  .facts{display:grid;grid-template-columns:repeat(4,1fr);margin-top:52px;border-top:1px solid var(--rule)}
+  .fact{padding:22px 26px 0;border-left:1px solid var(--rule)}
+  .fact:first-child{padding-left:0;border-left:0}
+  .fact b{display:block;font-family:var(--display);font-weight:500;font-size:20px;letter-spacing:-.01em;margin-top:8px}
+  .fact span{font-size:15px;color:var(--ink-soft)}
+
+  /* ---------- secties ---------- */
+  section{padding-block:var(--gap);border-top:1px solid var(--rule)}
+  .head{margin-bottom:48px}
+  .head .label{margin:0 0 14px}
+  .head p.note{margin:18px 0 0;color:var(--ink-soft);font-size:17px;max-width:40em}
+  h2{font-family:var(--display);font-weight:500;font-size:clamp(26px,3.2vw,36px);letter-spacing:-.02em;margin:0;max-width:24em;line-height:1.15}
+
+  .cols{display:grid;grid-template-columns:repeat(3,1fr)}
+  .col{padding:0 32px;border-left:1px solid var(--rule)}
+  .col:first-child{padding-left:0;border-left:0}
+  .col h3{font-family:var(--display);font-weight:500;font-size:19px;letter-spacing:-.01em;margin:14px 0 10px}
+  .col p{margin:0;color:var(--ink-soft);font-size:16px}
+
+  .blocks{display:grid;gap:20px}
+  .block{background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--blueprint);padding:26px 30px 28px}
+  .block .meta{display:flex;align-items:baseline;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--blueprint)}
+  .block .meta em{font-style:normal;color:var(--ink-soft)}
+  .block h3{font-family:var(--display);font-weight:500;font-size:22px;letter-spacing:-.015em;margin:12px 0 8px}
+  .block p{margin:0;color:var(--ink-soft);font-size:16px;max-width:52em}
+  .block a.case{display:inline-block;margin-top:16px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--blueprint);text-decoration:none}
+  .block a.case span{display:inline-block;transition:transform .2s}
+  .block a.case:hover span{transform:translateX(5px)}
+
+  /* track: twee kolommen kaarten */
+  .track{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+
+  /* compacte vakkenlijst */
+  .list{display:grid;grid-template-columns:repeat(2,1fr);gap:0 48px}
+  .list .group{grid-column:1 / -1;margin:32px 0 4px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+  .list .group:first-child{margin-top:0}
+  .item{display:flex;align-items:baseline;justify-content:space-between;gap:18px;padding:13px 0;border-top:1px solid var(--rule)}
+  .item span{font-family:var(--display);font-weight:500;font-size:16.5px;letter-spacing:-.005em;line-height:1.3}
+  .item em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--blueprint);white-space:nowrap}
+
+  footer{border-top:1px solid var(--rule);padding:26px 0 44px;font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+  .rise{opacity:0;transform:translateY(14px);animation:rise .7s cubic-bezier(.2,.7,.3,1) forwards}
+  .rise:nth-child(2){animation-delay:.06s}
+  .rise:nth-child(3){animation-delay:.12s}
+  @keyframes rise{to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){
+    .rise{animation:none;opacity:1;transform:none}
+    html{scroll-behavior:auto}
+  }
+
+  @media (max-width:880px){
+    .head{margin-bottom:32px}
+    .cols,.track,.list{grid-template-columns:1fr}
+    .col{padding:22px 0;border-left:0;border-top:1px solid var(--rule)}
+    .col:first-child{border-top:0;padding-top:0}
+    .facts{grid-template-columns:repeat(2,1fr)}
+    .fact{padding:22px 0 0;border-left:0}
+    .fact:nth-child(2n){padding-left:26px;border-left:1px solid var(--rule)}
+    .block{padding:22px 22px 24px}
+    nav a[href$="#achtergrond"],nav a[href$="#opleidingen"]{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="mark" href="index.html">Klaas de Jager</a>
+    <nav>
+      <a href="managementdrives.html">Profiel</a>
+      <a href="index.html#achtergrond">Achtergrond</a>
+      <a href="index.html#opleidingen">Opleidingen</a>
+      <a href="index.html#ervaring">Ervaring</a>
+      <a href="index.html#contact">Contact</a>
+      <span class="lang"><a href="../nyenrode.html">EN</a> / <b>NL</b></span>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <div class="wrap hero">
+    <a class="back" href="index.html#opleidingen"><span>←</span> Terug naar overzicht</a>
+    <p class="label rise">Nyenrode Business University · 2025 tot 2027</p>
+    <h1 class="rise">MSc Management<br>Financial Management</h1>
+    <p class="lead rise">Een master over strategie, organisatie en besluitvorming, met een specialisatie in finance. Waar de bachelor me leerde hoe een proces werkt, leert deze master wat een keuze kost, oplevert en waard is.</p>
+
+    <div class="actions">
+      <a class="btn ghost" href="mailto:Klaas.dejager10@gmail.com?subject=Aanvraag%20cijferlijst%20Nyenrode%20Klaas%20de%20Jager&body=Hallo%20Klaas%2C%0D%0A%0D%0AIk%20zou%20graag%20je%20cijferlijst%20van%20Nyenrode%20Business%20University%20ontvangen.%0D%0A%0D%0ANaam%3A%0D%0AOrganisatie%3A%0D%0AWaarvoor%3A%0D%0A%0D%0AMet%20vriendelijke%20groet%2C%0D%0A">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>
+        Cijferlijst opvragen
+      </a>
+      <p class="fine">De master is nog niet afgerond; de tussentijdse cijferlijst stuur ik op aanvraag toe. Niet online, omdat er persoonsgegevens op vermeld staan.</p>
+    </div>
+
+    <div class="facts">
+      <div class="fact">
+        <p class="label">Omvang</p>
+        <b>80 ECTS</b>
+        <span>Premaster en master</span>
+      </div>
+      <div class="fact">
+        <p class="label">Track</p>
+        <b>Financial Management</b>
+        <span>17 ECTS specialisatie</span>
+      </div>
+      <div class="fact">
+        <p class="label">Onderzoek</p>
+        <b>Thesis</b>
+        <span>15 ECTS</span>
+      </div>
+      <div class="fact">
+        <p class="label">Status</p>
+        <b>Afrondend</b>
+        <span>Verwacht 2027</span>
+      </div>
+    </div>
+  </div>
+
+  <section id="track">
+    <div class="wrap">
+      <div class="head">
+        <h2>De keuze: Financial Management.</h2>
+        <p class="note">Nyenrode biedt drie tracks: Global Business, Digital Business &amp; Innovation en Financial Management. Ik koos de laatste, omdat het de enige is die de vraag beantwoordt waar elk verbetervoorstel uiteindelijk op stukloopt of doorgaat: wat levert het op, en hoe betalen we het.</p>
+      </div>
+      <div class="track">
+        <div class="block">
+          <div class="meta"><span>Blok 3</span><em>4 ECTS</em></div>
+          <h3>Mergers, Acquisitions and Private Equity</h3>
+          <p>Hoe een overname tot stand komt: waarderen, financieren en structureren, en wat er na de handtekening nog moet samensmelten.</p>
+        </div>
+        <div class="block">
+          <div class="meta"><span>Blok 3</span><em>4 ECTS</em></div>
+          <h3>International Money and Finance</h3>
+          <p>Valuta, rente en kapitaalstromen tussen landen, en hoe een bedrijf zich indekt tegen de risico's die daarbij horen.</p>
+        </div>
+        <div class="block">
+          <div class="meta"><span>Blok 4</span><em>4 ECTS</em></div>
+          <h3>Asset Management &amp; Financial Markets</h3>
+          <p>Hoe kapitaal wordt belegd en geprijsd op financiële markten, en hoe rendement zich verhoudt tot het risico dat je ervoor neemt.</p>
+        </div>
+        <div class="block">
+          <div class="meta"><span>Blok 5 · incl. groepsproject</span><em>5 ECTS</em></div>
+          <h3>Advanced Corporate Finance</h3>
+          <p>Financieringsbeslissingen op directieniveau: kapitaalstructuur, investeringsruimte en waardecreatie, afgesloten met het groepsproject.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="meegenomen">
+    <div class="wrap">
+      <div class="head">
+        <h2>Drie dingen die ik uit deze master meeneem.</h2>
+      </div>
+      <div class="cols">
+        <div class="col">
+          <p class="label">Financieel</p>
+          <h3>Waarde kunnen beprijzen</h3>
+          <p>Een plan vertalen naar een waardering, een investeringsvoorstel of een kapitaalbehoefte. Niet alleen of iets beter wordt, maar hoeveel beter en tegen welke kosten.</p>
+        </div>
+        <div class="col">
+          <p class="label">Strategisch</p>
+          <h3>Keuzes onder onzekerheid</h3>
+          <p>Beslissen wanneer de cijfers niet compleet zijn: scenario's afwegen, risico benoemen en toch een richting kiezen die verdedigbaar is.</p>
+        </div>
+        <div class="col">
+          <p class="label">Organisatie</p>
+          <h3>Strategie laten landen</h3>
+          <p>Waarom goede plannen stranden in de uitvoering, en wat gedrag, structuur en leiderschap daarin doen.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="programma">
+    <div class="wrap">
+      <div class="head">
+        <h2>De rest van het programma.</h2>
+        <p class="note">De kernvakken zijn voor alle studenten gelijk en leggen de basis onder de specialisatie. De premaster overbrugde het verschil tussen een bachelor aan het hbo en de master.</p>
+      </div>
+
+      <div class="list">
+        <p class="group">Kernvakken master · 31 ECTS</p>
+        <div class="item"><span>Organisational Behaviour</span><em>3</em></div>
+        <div class="item"><span>Operations &amp; Supply Chain Management</span><em>5</em></div>
+        <div class="item"><span>Digitization in Business &amp; Society</span><em>4</em></div>
+        <div class="item"><span>Business Strategy and Alignment</span><em>4</em></div>
+        <div class="item"><span>Managerial Finance</span><em>4</em></div>
+        <div class="item"><span>Personal Leadership &amp; Career Development</span><em>5</em></div>
+        <div class="item"><span>Research in Business Administration</span><em>6</em></div>
+
+        <p class="group">Premaster · 17 ECTS</p>
+        <div class="item"><span>Academic Reading &amp; Writing</span><em>3</em></div>
+        <div class="item"><span>Business Statistics &amp; Analytical Business Tools</span><em>4</em></div>
+        <div class="item"><span>Foundations of Business Research</span><em>3</em></div>
+        <div class="item"><span>Foundations of Finance</span><em>4</em></div>
+        <div class="item"><span>Managerial Economics</span><em>3</em></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="thesis">
+    <div class="wrap">
+      <div class="head">
+        <h2>Thesis.</h2>
+      </div>
+      <div class="blocks">
+        <div class="block">
+          <div class="meta"><span>Afstudeeronderzoek</span><em>15 ECTS</em></div>
+          <h3>Onderwerp in afstemming</h3>
+          <p>Het afstudeeronderzoek waarmee ik de master afsluit. Onderwerp in afstemming; ik verwacht het najaar 2026 vast te stellen.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <span>© <span id="jaar">2026</span> Klaas de Jager</span>
+  <span><a href="index.html" style="text-decoration:none">Terug naar overzicht</a></span>
+</footer>
+
+<script>document.getElementById('jaar').textContent=new Date().getFullYear();</script>
+</body>
+</html>

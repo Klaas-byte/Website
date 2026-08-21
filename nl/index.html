@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Klaas de Jager | MSc Management, Financial Management</title>
+<meta name="description" content="Operatie en cijfers samenbrengen: zien waar de marge zit en dat vertalen naar een onderbouwd besluit. Beschikbaar vanaf maart 2027.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14181d;
+    --ink-soft:#4d555f;
+    --paper:#f7f8f9;
+    --card:#ffffff;
+    --rule:#dbdfe4;
+    --blueprint:#1b4c7e;
+    --tint:#e8eef4;
+    --display:"Archivo",system-ui,sans-serif;
+    --body:"Source Serif 4",Georgia,serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --gap:clamp(72px,9vw,132px);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{width:min(1080px,90vw);margin-inline:auto}
+  a{color:inherit}
+  :focus-visible{outline:2px solid var(--blueprint);outline-offset:3px}
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--blueprint)}
+
+  header{border-bottom:1px solid var(--rule);background:var(--paper);position:sticky;top:0;z-index:10}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:18px 0}
+  .mark{font-family:var(--display);font-weight:600;letter-spacing:-.01em;font-size:16px}
+  nav{display:flex;gap:26px;align-items:center;font-family:var(--mono);font-size:12px;letter-spacing:.06em}
+  nav a{text-decoration:none;color:var(--ink-soft)}
+  nav a:hover{color:var(--blueprint)}
+  .lang{border-left:1px solid var(--rule);padding-left:26px;color:var(--ink-soft)}
+  .lang a{text-decoration:none;color:var(--ink-soft)}
+  .lang a:hover{color:var(--blueprint)}
+  .lang b{color:var(--ink);font-weight:500}
+
+  .hero{padding:clamp(64px,11vw,140px) 0 var(--gap)}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(44px,7.4vw,86px);line-height:.98;letter-spacing:-.035em;margin:18px 0 0}
+  .lead{max-width:34em;margin:28px 0 0;font-size:clamp(19px,2.1vw,23px);line-height:1.5;color:var(--ink-soft)}
+  .actions{display:flex;flex-wrap:wrap;gap:14px;margin-top:40px}
+  .btn{font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;padding:14px 22px;border:1px solid var(--blueprint);transition:background .18s,color .18s}
+  .btn.solid{background:var(--blueprint);color:#fff}
+  .btn.solid:hover{background:var(--ink);border-color:var(--ink)}
+  .btn.ghost{color:var(--blueprint)}
+  .btn.ghost:hover{background:var(--tint)}
+
+  section{padding-block:var(--gap);border-top:1px solid var(--rule)}
+  .head{display:grid;grid-template-columns:170px 1fr;gap:32px;align-items:baseline;margin-bottom:56px}
+  h2{font-family:var(--display);font-weight:500;font-size:clamp(26px,3.4vw,36px);letter-spacing:-.02em;margin:0;max-width:16em;line-height:1.15}
+
+  .cols{display:grid;grid-template-columns:repeat(3,1fr)}
+  .col{padding:0 32px;border-left:1px solid var(--rule)}
+  .col:first-child{padding-left:0;border-left:0}
+  .col h3{font-family:var(--display);font-weight:500;font-size:19px;letter-spacing:-.01em;margin:14px 0 10px}
+  .col p{margin:0;color:var(--ink-soft);font-size:16px}
+
+  /* ---------- kaarten ---------- */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .grid.two{grid-template-columns:repeat(2,1fr)}
+  .card{
+    display:flex;flex-direction:column;text-decoration:none;
+    background:var(--card);border:1px solid var(--rule);
+    transition:border-color .2s,transform .2s;
+  }
+  .card:hover{border-color:var(--blueprint);transform:translateY(-3px)}
+  .shot{position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--tint);border-bottom:1px solid var(--rule)}
+  .shot img{width:100%;height:100%;object-fit:cover;display:block;filter:grayscale(.35) contrast(1.03);transition:filter .35s,transform .5s}
+  .card:hover .shot img{filter:none;transform:scale(1.035)}
+  .ph{display:flex;align-items:center;justify-content:center;height:100%;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9aa3ad}
+  .tag{position:absolute;left:0;bottom:0;background:var(--card);color:var(--blueprint);font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:7px 12px;border-top:1px solid var(--rule);border-right:1px solid var(--rule)}
+  .body{padding:24px 26px 26px;display:flex;flex-direction:column;flex:1}
+  .card h3{font-family:var(--display);font-weight:500;font-size:21px;letter-spacing:-.015em;margin:0 0 4px}
+  .card:hover h3{color:var(--blueprint)}
+  .org{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);margin:0 0 14px}
+  .card p.desc{margin:0;font-size:15.5px;color:var(--ink-soft)}
+  .more{margin-top:auto;padding-top:18px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--blueprint)}
+  .more span{display:inline-block;transition:transform .2s}
+  .card:hover .more span{transform:translateX(5px)}
+
+  /* Management Drives-kaart */
+  .chart{display:flex;align-items:flex-end;gap:8px;height:100%;padding:34px 26px 0;background:var(--card)}
+  .chart i{flex:1;background:var(--c);height:calc(var(--v) * 1%);transform-origin:bottom;transform:scaleY(0);animation:grow .8s cubic-bezier(.2,.7,.3,1) forwards}
+  .chart i:nth-child(2){animation-delay:.05s}
+  .chart i:nth-child(3){animation-delay:.1s}
+  .chart i:nth-child(4){animation-delay:.15s}
+  .chart i:nth-child(5){animation-delay:.2s}
+  .chart i:nth-child(6){animation-delay:.25s}
+  @keyframes grow{to{transform:scaleY(1)}}
+
+  .contact{display:grid;grid-template-columns:170px 1fr;gap:32px}
+  .channels{display:grid;grid-template-columns:repeat(3,1fr);margin-top:8px}
+  .aside{margin:34px 0 0;font-size:15px;color:var(--ink-soft)}
+  .aside a{color:var(--blueprint);text-decoration:none;border-bottom:1px solid var(--rule)}
+  .aside a:hover{border-color:var(--blueprint)}
+  .ch{padding:0 30px;border-left:1px solid var(--rule);text-decoration:none;display:block}
+  .ch:first-child{padding-left:0;border-left:0}
+  .ch strong{display:block;font-family:var(--display);font-weight:500;font-size:18px;margin:12px 0 6px}
+  .ch span{color:var(--ink-soft);font-size:15.5px}
+  .ch:hover strong{color:var(--blueprint)}
+
+  footer{border-top:1px solid var(--rule);padding:26px 0 44px;font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+  .rise{opacity:0;transform:translateY(14px);animation:rise .7s cubic-bezier(.2,.7,.3,1) forwards}
+  .rise:nth-child(2){animation-delay:.06s}
+  .rise:nth-child(3){animation-delay:.12s}
+  .rise:nth-child(4){animation-delay:.18s}
+  @keyframes rise{to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){
+    .rise,.chart i{animation:none;opacity:1;transform:none}
+    .card:hover{transform:none}
+    .card:hover .shot img{transform:none}
+    html{scroll-behavior:auto}
+  }
+
+  @media (max-width:880px){
+    .head,.contact{grid-template-columns:1fr;gap:12px;margin-bottom:40px}
+    .cols,.channels,.grid{grid-template-columns:1fr}
+    .grid{gap:20px}
+    .col,.ch{padding:22px 0;border-left:0;border-top:1px solid var(--rule)}
+    .col:first-child,.ch:first-child{border-top:0;padding-top:0}
+    nav a[href="#achtergrond"],nav a[href="#opleidingen"]{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <div class="mark">Klaas de Jager</div>
+    <nav>
+      <a href="managementdrives.html">Profiel</a>
+      <a href="#achtergrond">Achtergrond</a>
+      <a href="#opleidingen">Opleidingen</a>
+      <a href="#ervaring">Ervaring</a>
+      <a href="#contact">Contact</a>
+      <span class="lang"><a href="../index.html">EN</a> / <b>NL</b></span>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <div class="wrap hero">
+    <p class="label rise">Beschikbaar vanaf maart 2027 · analistrollen in M&amp;A, transaction services en restructuring</p>
+    <h1 class="rise">Van de werkvloer<br>naar de businesscase.</h1>
+    <p class="lead rise">Ik werk op het punt waar operatie en cijfers samenkomen: zien waar een bedrijf marge verliest, en dat vertalen naar een onderbouwd besluit. Achtergrond in technische bedrijfskunde, nu MSc Management met specialisatie Financial Management.</p>
+    <div class="actions rise">
+      <a class="btn solid" href="#ervaring">Bekijk mijn werk</a>
+      <a class="btn ghost" href="mailto:Klaas.dejager10@gmail.com?subject=Aanvraag%20cv%20Klaas%20de%20Jager&body=Hallo%20Klaas%2C%0D%0A%0D%0AIk%20zou%20graag%20je%20cv%20ontvangen.%0D%0A%0D%0ANaam%3A%0D%0AOrganisatie%3A%0D%0A%0D%0AMet%20vriendelijke%20groet%2C%0D%0A">Cv opvragen</a>
+    </div>
+  </div>
+
+  <section id="achtergrond">
+    <div class="wrap">
+      <div class="head">
+        <p class="label">01 · Achtergrond</p>
+        <h2>Waar ik goed in ben, en waarom dat samenhangt.</h2>
+      </div>
+      <div class="cols">
+        <div class="col">
+          <p class="label">Operations</p>
+          <h3>Zien waar de marge zit</h3>
+          <p>Processen doorgronden tot zichtbaar wordt waar tijd, geld en capaciteit weglekken, en welke ingreep dat daadwerkelijk verhelpt.</p>
+        </div>
+        <div class="col">
+          <p class="label">Finance</p>
+          <h3>Onderbouwde besluitvorming</h3>
+          <p>Beslissingen baseren op data in plaats van aanname. Inzicht in kosten, risico en rendement als basis voor de keuze die volgt.</p>
+        </div>
+        <div class="col">
+          <p class="label">Mindset</p>
+          <h3>Eigenaarschap</h3>
+          <p>Verantwoordelijkheid pakken, kansen signaleren en ideeën omzetten in iets dat af is. Praktisch, met oog voor het eindresultaat.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="opleidingen">
+    <div class="wrap">
+      <div class="head">
+        <p class="label">02 · Opleidingen</p>
+        <h2>Waar ik de basis heb gelegd.</h2>
+      </div>
+
+      <div class="grid two">
+
+        <a class="card" href="hva.html">
+          <div class="shot">
+            <img src="../Images/hva.jpg" alt="Gebouw van de Hogeschool van Amsterdam" loading="lazy">
+            <span class="tag">Opleiding · 2020 tot 2024</span>
+          </div>
+          <div class="body">
+            <h3>Hogeschool van Amsterdam</h3>
+            <p class="org">BSc Technische Bedrijfskunde</p>
+            <p class="desc">Techniek, operations en management gecombineerd. Gericht op het analyseren en verbeteren van bedrijfsprocessen.</p>
+            <p class="more">Bekijk opleiding <span>→</span></p>
+          </div>
+        </a>
+
+        <a class="card" href="nyenrode.html">
+          <div class="shot">
+            <img src="../Images/nyenrode.jpg" alt="Campus van Nyenrode Business University" loading="lazy">
+            <span class="tag">Opleiding · 2025 tot 2027</span>
+          </div>
+          <div class="body">
+            <h3>Nyenrode Business University</h3>
+            <p class="org">MSc Management · Premaster</p>
+            <p class="desc">Premasterprogramma en master. Nadruk op strategie, organisatie en onderbouwd kiezen onder onzekerheid.</p>
+            <p class="more">Bekijk opleiding <span>→</span></p>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <section id="ervaring">
+    <div class="wrap">
+      <div class="head">
+        <p class="label">03 · Ervaring</p>
+        <h2>Drie plekken waar ik heb geleerd hoe werk echt loopt.</h2>
+      </div>
+
+      <div class="grid">
+
+        <a class="card" href="msd.html">
+          <div class="shot">
+            <img src="../Images/msd.jpg" alt="Productieomgeving bij MSD" loading="lazy">
+            <span class="tag">Stage · 2023</span>
+          </div>
+          <div class="body">
+            <h3>MSD</h3>
+            <p class="org">Technical Operations</p>
+            <p class="desc">Tool gebouwd in Excel en VBA voor inzet in FTE binnen investeringsprojecten. In rondes verfijnd met de gebruikers.</p>
+            <p class="more">Bekijk case <span>→</span></p>
+          </div>
+        </a>
+
+        <a class="card" href="ey.html">
+          <div class="shot">
+            <img src="../Images/ey.jpg" alt="Kantoor van EY" loading="lazy">
+            <span class="tag">Scriptiestage · 2024</span>
+          </div>
+          <div class="body">
+            <h3>EY</h3>
+            <p class="org">Technology Risk</p>
+            <p class="desc">Meegedraaid in audits van controles op IT. Onderzoek gedaan naar het onboardingproces, dat per medewerker verschilde.</p>
+            <p class="more">Bekijk case <span>→</span></p>
+          </div>
+        </a>
+
+        <a class="card" href="hak.html">
+          <div class="shot">
+            <img src="../Images/ahak.jpg" alt="Uitvoering op locatie bij A. Hak" loading="lazy">
+            <span class="tag">Werk · 2025</span>
+          </div>
+          <div class="body">
+            <h3>A. Hak</h3>
+            <p class="org">Werkvoorbereiding</p>
+            <p class="desc">Planningen afgestemd tussen kantoor en de ploegen buiten. Verschillen tussen planning en praktijk vroeg zichtbaar gemaakt.</p>
+            <p class="more">Bekijk case <span>→</span></p>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap contact">
+      <p class="label">04 · Contact</p>
+      <div>
+        <h2>Meedenken over een vraagstuk, of vrijblijvend kennismaken.</h2>
+        <div class="channels">
+          <a class="ch" href="mailto:Klaas.dejager10@gmail.com">
+            <p class="label">Mail</p>
+            <strong>Klaas.dejager10@gmail.com</strong>
+            <span>Reactie binnen een werkdag.</span>
+          </a>
+          <a class="ch" href="https://nl.linkedin.com/in/klaas-de-jager">
+            <p class="label">LinkedIn</p>
+            <strong>Profiel en netwerk</strong>
+            <span>Volledige werkervaring en opleidingen.</span>
+          </a>
+          <a class="ch" href="https://calendly.com/klaas-dejager10/30min">
+            <p class="label">Agenda</p>
+            <strong>Plan 30 minuten</strong>
+            <span>Online kennismaking, direct in te boeken.</span>
+          </a>
+        </div>
+        <p class="aside">Ter voorbereiding op een gesprek: mijn <a href="managementdrives.html">profiel van Management Drives</a>.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <span>© <span id="jaar">2026</span> Klaas de Jager</span>
+  <span>Haarlem, Nederland</span>
+</footer>
+
+<script>document.getElementById('jaar').textContent=new Date().getFullYear();</script>
+</body>
+</html>
