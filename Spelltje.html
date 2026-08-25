@@ -1,0 +1,748 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="nl"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1">&lt;meta charset="UTF-8"&gt;</p>
+<p class="p1">&lt;title&gt;Nachtstorm — 1v1 Duel&lt;/title&gt;</p>
+<p class="p1">&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>* { margin:0; padding:0; box-sizing:border-box; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>body { overflow:hidden; font-family:'Trebuchet MS', sans-serif; background:#0d0d16; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#hud { position:fixed; inset:0; pointer-events:none; z-index:10; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#crosshair { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:20px; height:20px; transition:opacity .12s; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#crosshair::before, #crosshair::after { content:''; position:absolute; background:#7CFC00; box-shadow:0 0 4px rgba(0,0,0,.8); border-radius:1px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#crosshair::before { left:50%; top:0; width:2px; height:100%; transform:translateX(-50%); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#crosshair::after { top:50%; left:0; height:2px; width:100%; transform:translateY(-50%); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#adsDot { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:5px; height:5px; background:#ff3b3b; border-radius:50%; box-shadow:0 0 6px #ff3b3b; opacity:0; transition:opacity .12s; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#vignette { position:fixed; inset:0; background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,.85) 75%); opacity:0; transition:opacity .15s; z-index:4; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#hitmarker { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(45deg); width:26px; height:26px; opacity:0; transition:opacity .15s; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#hitmarker::before, #hitmarker::after { content:''; position:absolute; background:#fff; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#hitmarker::before { left:50%; top:0; width:2px; height:100%; transform:translateX(-50%); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#hitmarker::after { top:50%; left:0; height:2px; width:100%; transform:translateY(-50%); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.panel { position:absolute; background:rgba(10,14,22,.82); border:1px solid rgba(124,252,0,.25); border-radius:8px; padding:8px 16px; font-weight:bold; color:#dfe; box-shadow:0 4px 12px rgba(0,0,0,.5); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#scoreboard { top:14px; left:50%; transform:translateX(-50%); font-size:22px; letter-spacing:1px; padding:8px 22px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#scoreboard .me { color:#7CFC00; } #scoreboard .them { color:#ff5c5c; } #scoreboard .sep { color:#556; margin:0 10px; font-size:16px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#netinfo { top:64px; left:50%; transform:translateX(-50%); font-size:12px; color:#89a; padding:4px 12px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#hpwrap { bottom:20px; left:20px; width:230px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#hpbar-bg { width:100%; height:14px; background:#222; border-radius:7px; overflow:hidden; margin-top:4px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#hpbar { width:100%; height:100%; background:linear-gradient(90deg,#e74c3c,#2ecc71 60%); transition:width .15s; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#hplabel { font-size:13px; color:#cde; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#stance { bottom:76px; left:20px; font-size:13px; color:#7CFC00; padding:5px 12px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#ammo { bottom:20px; right:20px; font-size:30px; color:#fff; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#ammo small { font-size:15px; color:#8a9; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#reloadHint { position:absolute; bottom:70px; right:24px; font-size:13px; color:#ffcf5c; opacity:0; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#bigMsg { position:absolute; top:32%; left:50%; transform:translateX(-50%); font-size:34px; font-weight:900; text-shadow:0 0 12px #000; opacity:0; transition:opacity .2s; white-space:nowrap; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#killfeed { position:absolute; top:110px; right:20px; text-align:right; font-size:14px; color:#cde; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#killfeed div { background:rgba(10,14,22,.7); border-radius:6px; padding:5px 12px; margin-bottom:5px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#damageFlash { position:fixed; inset:0; background:radial-gradient(ellipse at center, transparent 40%, rgba(255,0,0,.55) 100%); opacity:0; transition:opacity .25s; z-index:5; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#deadScreen { position:fixed; inset:0; background:rgba(60,0,0,.55); z-index:6; opacity:0; transition:opacity .3s; display:flex; align-items:center; justify-content:center; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#deadScreen span { font-size:40px; font-weight:900; color:#fff; text-shadow:0 0 20px #000; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#overlay { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(8,10,18,.96); z-index:20; text-align:center; pointer-events:auto; padding:20px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#overlay h1 { font-size:44px; color:#fff; text-shadow:0 0 24px #7CFC00; margin-bottom:8px; letter-spacing:2px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#overlay p { font-size:16px; color:#bcd; margin:5px 0; max-width:660px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.btn { margin:8px; padding:14px 40px; font-size:20px; font-weight:900; color:#0d0d16; background:#7CFC00; border:none; border-radius:6px; cursor:pointer; box-shadow:0 0 22px rgba(124,252,0,.35); font-family:inherit; letter-spacing:1px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.btn.alt { background:#4d96ff; box-shadow:0 0 22px rgba(77,150,255,.35); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.btn:hover { transform:scale(1.04); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.btn:disabled { background:#445; color:#889; box-shadow:none; cursor:default; transform:none; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#codeBox { font-size:44px; font-weight:900; letter-spacing:12px; color:#7CFC00; background:rgba(0,0,0,.5); border:2px dashed #7CFC00; border-radius:10px; padding:14px 26px; margin:14px 0; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#joinInput { font-size:30px; letter-spacing:8px; text-align:center; text-transform:uppercase; width:280px; padding:12px; border-radius:8px; border:2px solid #4d96ff; background:rgba(0,0,0,.5); color:#fff; font-family:inherit; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.step { display:none; flex-direction:column; align-items:center; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.step.active { display:flex; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>#status { font-size:15px; color:#ffcf5c; margin-top:12px; min-height:22px; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>.hidden { display:none !important; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>kbd { background:#223; border:1px solid #445; border-radius:4px; padding:1px 6px; font-size:13px; }</p>
+<p class="p1">&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1">&lt;div id="damageFlash"&gt;&lt;/div&gt;</p>
+<p class="p1">&lt;div id="vignette"&gt;&lt;/div&gt;</p>
+<p class="p1">&lt;div id="deadScreen"&gt;&lt;span id="deadText"&gt;NEERGESCHOTEN&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1">&lt;div id="hud"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="crosshair"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="adsDot"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="hitmarker"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="panel" id="scoreboard"&gt;&lt;span class="me" id="myScore"&gt;0&lt;/span&gt;&lt;span class="sep"&gt;JIJ — TEGENSTANDER&lt;/span&gt;&lt;span class="them" id="theirScore"&gt;0&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="panel" id="netinfo"&gt;verbonden · ping — ms&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="killfeed"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="panel" id="hpwrap"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;span id="hplabel"&gt;OPERATOR — 100 HP&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="hpbar-bg"&gt;&lt;div id="hpbar"&gt;&lt;/div&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="panel" id="stance"&gt;🏃 STAAND&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="panel" id="ammo"&gt;30 &lt;small&gt;/ ∞ &amp;nbsp;MP5&lt;/small&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="reloadHint"&gt;Druk op R om te herladen&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="bigMsg"&gt;&lt;/div&gt;</p>
+<p class="p1">&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;div id="overlay"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- STAP 1: menu --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="step active" id="stepMenu"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;h1&gt;⚔️ NACHTSTORM 1v1&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p&gt;Duel in het gebouw. &lt;b&gt;Eerste tot 10 kills wint.&lt;/b&gt; Headshot = direct dood, 3 bodyshots ook.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p&gt;&lt;kbd&gt;WASD&lt;/kbd&gt; lopen · &lt;kbd&gt;Shift&lt;/kbd&gt; sluipen · &lt;kbd&gt;Spatie&lt;/kbd&gt; springen · &lt;kbd&gt;Links&lt;/kbd&gt; vuren · &lt;kbd&gt;Rechts&lt;/kbd&gt; richten · &lt;kbd&gt;R&lt;/kbd&gt; herladen&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div style="margin-top:18px"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn" id="hostBtn"&gt;🎮 SPEL HOSTEN&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn alt" id="joinBtn"&gt;🔗 MEEDOEN&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p style="font-size:13px;opacity:.6;margin-top:16px"&gt;Eén van jullie host en geeft de code door. De ander doet mee.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- STAP 2: hosten --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="step" id="stepHost"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;h1&gt;JOUW CODE&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p&gt;Geef deze code door aan je tegenstander:&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="codeBox"&gt;-----&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p&gt;Zodra hij meedoet, start het duel automatisch.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="status"&gt;Verbinding voorbereiden...&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;button class="btn" id="backBtn1" style="background:#445;color:#ccd;margin-top:16px"&gt;← terug&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- STAP 3: meedoen --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="step" id="stepJoin"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;h1&gt;CODE INVOEREN&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p&gt;Typ de code van de host:&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;input id="joinInput" maxlength="5" placeholder="XXXXX" autocomplete="off"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;button class="btn alt" id="connectBtn" style="margin-top:14px"&gt;VERBINDEN&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="status2"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;button class="btn" id="backBtn2" style="background:#445;color:#ccd;margin-top:10px"&gt;← terug&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- STAP 4: klaar om te starten --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="step" id="stepReady"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;h1 id="readyTitle"&gt;✅ VERBONDEN&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;p id="readyText"&gt;Je tegenstander is er. Klik om het duel te starten.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;button class="btn" id="playBtn"&gt;▶ DUEL STARTEN&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p1">&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"&gt;&lt;/script&gt;</p>
+<p class="p1">&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"&gt;&lt;/script&gt;</p>
+<p class="p1">&lt;script&gt;</p>
+<p class="p1">// ============================================================</p>
+<p class="p1">//<span class="Apple-converted-space">  </span>WERELD (zelfde map als de singleplayer, zonder terroristen)</p>
+<p class="p1">// ============================================================</p>
+<p class="p1">const scene = new THREE.Scene();</p>
+<p class="p1">scene.background = new THREE.Color(0x0d0d16);</p>
+<p class="p1">scene.fog = new THREE.Fog(0x0d0d16, 40, 130);</p>
+<p class="p1">const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, .1, 300);</p>
+<p class="p1">const renderer = new THREE.WebGLRenderer({ antialias:true });</p>
+<p class="p1">renderer.setSize(innerWidth, innerHeight);</p>
+<p class="p1">renderer.shadowMap.enabled = true;</p>
+<p class="p1">document.body.appendChild(renderer.domElement);</p>
+<p class="p1">document.addEventListener('contextmenu', e =&gt; e.preventDefault());</p>
+<p class="p2"><br></p>
+<p class="p1">const moon = new THREE.DirectionalLight(0x99aaff,.5);</p>
+<p class="p1">moon.position.set(-40,60,30); moon.castShadow = true;</p>
+<p class="p1">moon.shadow.camera.left=-50; moon.shadow.camera.right=50; moon.shadow.camera.top=50; moon.shadow.camera.bottom=-50;</p>
+<p class="p1">scene.add(moon, new THREE.AmbientLight(0x556688,.55));</p>
+<p class="p1">const rnd=(a,b)=&gt;a+Math.random()*(b-a);</p>
+<p class="p2"><br></p>
+<p class="p1">{ const g=new THREE.BufferGeometry(), pos=[];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>for(let i=0;i&lt;350;i++){ const a=rnd(0,Math.PI*2), e=rnd(.1,Math.PI/2.2);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>pos.push(Math.cos(a)*Math.cos(e)*180, Math.sin(e)*180+10, Math.sin(a)*Math.cos(e)*180); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:.6}))); }</p>
+<p class="p2"><br></p>
+<p class="p1">const ground = new THREE.Mesh(new THREE.CircleGeometry(90,48), new THREE.MeshLambertMaterial({color:0x22301f}));</p>
+<p class="p1">ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);</p>
+<p class="p1">const plaza = new THREE.Mesh(new THREE.CircleGeometry(24,32), new THREE.MeshLambertMaterial({color:0x3a3a42}));</p>
+<p class="p1">plaza.rotation.x=-Math.PI/2; plaza.position.y=.01; plaza.receiveShadow=true; scene.add(plaza);</p>
+<p class="p2"><br></p>
+<p class="p1">const F=[0,4.2,8.4], CEIL=12.6;</p>
+<p class="p1">const solids=[], colliders=[], platforms=[];</p>
+<p class="p1">const HOLE1={x0:9,x1:13.2,z0:-2,z1:10}, HOLE2={x0:-13.2,x1:-9,z0:-10,z1:2};</p>
+<p class="p2"><br></p>
+<p class="p1">function addBox(x,y,z,w,h,d,mat,opts={}){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>m.position.set(x,y,z); m.castShadow=m.receiveShadow=true;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>scene.add(m); solids.push(m);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(opts.collide!==false) colliders.push({min:new THREE.Vector3(x-w/2,y-h/2,z-d/2),max:new THREE.Vector3(x+w/2,y+h/2,z+d/2)});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(opts.platform) platforms.push({x0:x-w/2,x1:x+w/2,z0:z-d/2,z1:z+d/2,top:y+h/2});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>return m;</p>
+<p class="p1">}</p>
+<p class="p1">const wallMat=new THREE.MeshLambertMaterial({color:0x8a8578});</p>
+<p class="p1">const wallMatIn=new THREE.MeshLambertMaterial({color:0x6e6a60});</p>
+<p class="p1">const slabMat=new THREE.MeshLambertMaterial({color:0x555058});</p>
+<p class="p1">const metalMat=new THREE.MeshLambertMaterial({color:0x40444c});</p>
+<p class="p2"><br></p>
+<p class="p1">for(let fl=0;fl&lt;3;fl++){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const y=F[fl]+2.1,h=4.2;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(fl===0){ addBox(-7.25,y,13,11.5,h,.4,wallMat); addBox(7.25,y,13,11.5,h,.4,wallMat); addBox(0,F[0]+3.6,13,3,1.2,.4,wallMat); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>else addBox(0,y,13,26,h,.4,wallMat);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>addBox(0,y,-13,26,h,.4,wallMat); addBox(-13,y,0,.4,h,26,wallMat); addBox(13,y,0,.4,h,26,wallMat);</p>
+<p class="p1">}</p>
+<p class="p1">function addSlab(y,hole){ const o={collide:false};</p>
+<p class="p1"><span class="Apple-converted-space">  </span>addBox((-13+hole.x0)/2,y,0,hole.x0+13,.35,26,slabMat,o);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>addBox((hole.x1+13)/2,y,0,13-hole.x1,.35,26,slabMat,o);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>addBox((hole.x0+hole.x1)/2,y,(hole.z1+13)/2,hole.x1-hole.x0,.35,13-hole.z1,slabMat,o);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>addBox((hole.x0+hole.x1)/2,y,(-13+hole.z0)/2,hole.x1-hole.x0,.35,hole.z0+13,slabMat,o); }</p>
+<p class="p1">addSlab(F[1]-.17,HOLE1); addSlab(F[2]-.17,HOLE2);</p>
+<p class="p1">addBox(0,CEIL,0,26,.35,26,slabMat,{collide:false});</p>
+<p class="p2"><br></p>
+<p class="p1">const rampMat=new THREE.MeshLambertMaterial({color:0x7a6a50});</p>
+<p class="p1">function addRamp(x0,x1,zLow,zHigh,yLow,yHigh){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const dz=zHigh-zLow, dy=yHigh-yLow, len=Math.hypot(dz,dy);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const m=new THREE.Mesh(new THREE.BoxGeometry(x1-x0,.3,len),rampMat);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>m.position.set((x0+x1)/2,(yLow+yHigh)/2,(zLow+zHigh)/2);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>m.rotation.x=-Math.atan2(dy,dz); m.castShadow=m.receiveShadow=true;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>scene.add(m); solids.push(m);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const railMat=new THREE.MeshLambertMaterial({color:0x4a4a52});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>[x0+.1,x1-.1].forEach(rx=&gt;{ const r=new THREE.Mesh(new THREE.BoxGeometry(.1,.1,len),railMat);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>r.position.set(rx,(yLow+yHigh)/2+1,(zLow+zHigh)/2); r.rotation.x=-Math.atan2(dy,dz); scene.add(r); });</p>
+<p class="p1">}</p>
+<p class="p1">addRamp(9.4,12.8,10,-2,F[0],F[1]);</p>
+<p class="p1">addRamp(-12.8,-9.4,-10,2,F[1],F[2]);</p>
+<p class="p2"><br></p>
+<p class="p1">addBox(-7.5,F[0]+2.1,2,11,4.2,.35,wallMatIn);</p>
+<p class="p1">addBox(5.5,F[0]+2.1,2,7,4.2,.35,wallMatIn);</p>
+<p class="p1">addBox(0,F[1]+2.1,-4.5,.35,4.2,17,wallMatIn);</p>
+<p class="p1">addBox(-5,F[2]+2.1,-3,16,4.2,.35,wallMatIn);</p>
+<p class="p2"><br></p>
+<p class="p1">const winOn=new THREE.MeshBasicMaterial({color:0xffcf5c}), winOff=new THREE.MeshBasicMaterial({color:0x1a2030});</p>
+<p class="p1">for(let fl=0;fl&lt;3;fl++) for(let wx=-9;wx&lt;=9;wx+=4.5){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(fl===0&amp;&amp;Math.abs(wx)&lt;3) continue;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const win=new THREE.Mesh(new THREE.PlaneGeometry(1.4,1.8),Math.random()&lt;.45?winOn:winOff);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>win.position.set(wx,F[fl]+2.2,13.22); scene.add(win);</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">// --- Meubels ---</p>
+<p class="p1">const woodDark=new THREE.MeshLambertMaterial({color:0x4a3524});</p>
+<p class="p1">const woodLight=new THREE.MeshLambertMaterial({color:0x6b5138});</p>
+<p class="p1">const fabricA=new THREE.MeshLambertMaterial({color:0x3f4a5c});</p>
+<p class="p1">const fabricB=new THREE.MeshLambertMaterial({color:0x5c3f42});</p>
+<p class="p1">const linen=new THREE.MeshLambertMaterial({color:0xb9b4a6});</p>
+<p class="p1">function furnBox(x,y,z,w,h,d,mat){ return addBox(x,y,z,w,h,d,mat,{platform:true}); }</p>
+<p class="p1">function makeBed(x,y,z,rot=0){ const w=rot?3.0:1.9,d=rot?1.9:3.0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>furnBox(x,y+.28,z,w,.56,d,woodDark);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>addBox(x,y+.68,z,rot?2.8:1.75,.26,rot?1.75:2.8,linen,{collide:false});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>addBox(rot?x-1.15:x,y+.86,rot?z:z-1.15,rot?.4:1.1,.16,rot?1.1:.4,new THREE.MeshLambertMaterial({color:0xdad5c8}),{collide:false}); }</p>
+<p class="p1">function makeCouch(x,y,z,rot=0,mat=fabricA){ const w=rot?1.1:2.6,d=rot?2.6:1.1;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>furnBox(x,y+.35,z,w,.7,d,mat);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>addBox(rot?x+.42:x,y+.85,rot?z:z-.42,rot?.28:2.6,.8,rot?2.6:.28,mat,{collide:false}); }</p>
+<p class="p1">function makeDesk(x,y,z,rot=0){ furnBox(x,y+.4,z,rot?1.0:2.0,.8,rot?2.0:1.0,woodLight);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>addBox(x,y+1.15,z,rot?.1:.8,.5,rot?.8:.1,metalMat,{collide:false}); }</p>
+<p class="p1">function makeCabinet(x,y,z,rot=0){ furnBox(x,y+.85,z,rot?.6:1.6,1.7,rot?1.6:.6,woodDark); }</p>
+<p class="p1">function makeTable(x,y,z){ furnBox(x,y+.38,z,1.6,.76,1.6,woodLight); }</p>
+<p class="p1">function makeCrate(x,y,z){ const s=rnd(.9,1.3); furnBox(x,y+s/2,z,s,s,s,new THREE.MeshLambertMaterial({color:0x5c4433})); }</p>
+<p class="p1">function makeSandbag(x,y,z,rot=0){ furnBox(x,y+.45,z,rot?.9:2.2,.9,rot?2.2:.9,new THREE.MeshLambertMaterial({color:0x6b6248})); }</p>
+<p class="p2"><br></p>
+<p class="p1">const lampsList=[];</p>
+<p class="p1">function makeLamp(x,y,z,color=0xffd9a0,intensity=.85,range=16){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const shade=new THREE.Mesh(new THREE.ConeGeometry(.45,.5,10),new THREE.MeshLambertMaterial({color:0x2e2e34}));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>shade.position.set(x,y+3.2,z);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const bulb=new THREE.Mesh(new THREE.SphereGeometry(.13,8,8),new THREE.MeshBasicMaterial({color}));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>bulb.position.set(x,y+2.95,z);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>scene.add(shade,bulb);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const l=new THREE.PointLight(color,intensity,range); l.position.set(x,y+2.9,z); scene.add(l);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>lampsList.push({light:l,base:intensity,flicker:Math.random()&lt;.3});</p>
+<p class="p1">}</p>
+<p class="p1">// Verdieping 1</p>
+<p class="p1">makeCouch(-6.5,F[0],8,0,fabricA); makeTable(-6.5,F[0],5.6); makeDesk(5.5,F[0],8.5);</p>
+<p class="p1">makeCabinet(11.5,F[0],6,1); makeCrate(2.5,F[0],6.5); makeCrate(3.8,F[0],8.2);</p>
+<p class="p1">makeBed(-9.5,F[0],-6); makeBed(-5.5,F[0],-6); makeCabinet(-1.5,F[0],-11.5);</p>
+<p class="p1">makeDesk(4,F[0],-10); makeCouch(6.5,F[0],-3,0,fabricB); makeSandbag(0,F[0],-6.5);</p>
+<p class="p1">makeLamp(-6,F[0],6); makeLamp(4,F[0],-7);</p>
+<p class="p1">// Verdieping 2</p>
+<p class="p1">makeBed(-10.5,F[1],8); makeBed(-6.5,F[1],8); makeCabinet(-11.8,F[1],1,1);</p>
+<p class="p1">makeDesk(-4,F[1],-3,1); makeCouch(-7,F[1],-9,0,fabricB); makeTable(-3.5,F[1],-10);</p>
+<p class="p1">makeCrate(-2,F[1],2); makeDesk(4,F[1],8); makeCouch(6.5,F[1],3.5,1,fabricA);</p>
+<p class="p1">makeSandbag(3,F[1],-4,1); makeBed(6,F[1],-9,1); makeCabinet(1.5,F[1],-11.5);</p>
+<p class="p1">makeLamp(-6,F[1],5); makeLamp(5,F[1],-6);</p>
+<p class="p1">// Verdieping 3</p>
+<p class="p1">makeCouch(-6,F[2],8,0,fabricA); makeTable(-6,F[2],5.5); makeBed(-10.5,F[2],6);</p>
+<p class="p1">makeDesk(3,F[2],7.5); makeCabinet(8,F[2],10); makeCrate(6,F[2],3);</p>
+<p class="p1">makeSandbag(3.5,F[2],-6,1); makeSandbag(9,F[2],-10); makeDesk(10.5,F[2],-5,1);</p>
+<p class="p1">makeCrate(4.5,F[2],-11); makeCabinet(7,F[2],-2);</p>
+<p class="p1">makeLamp(-5,F[2],6); makeLamp(7,F[2],-7,0xff8866,1.0,14);</p>
+<p class="p2"><br></p>
+<p class="p1">function makeBuilding(x,z){ const w=rnd(6,9),h=rnd(8,16),d=rnd(6,9);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:[0x2c2c44,0x38384f,0x24243a][Math.floor(Math.random()*3)]}));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>b.position.set(x,h/2,z); b.castShadow=true; b.lookAt(0,h/2,0); scene.add(b); }</p>
+<p class="p1">for(let i=0;i&lt;10;i++){ const a=i/10*Math.PI*2+rnd(-.2,.2),r=rnd(55,80); makeBuilding(Math.cos(a)*r,Math.sin(a)*r); }</p>
+<p class="p1">[[-18,14],[18,14],[-18,-14],[18,-14]].forEach(([lx,lz])=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const pole=new THREE.Mesh(new THREE.CylinderGeometry(.14,.18,7,8),metalMat); pole.position.set(lx,3.5,lz);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const head=new THREE.Mesh(new THREE.SphereGeometry(.35,8,8),new THREE.MeshBasicMaterial({color:0xfff0c0})); head.position.set(lx,7.1,lz);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>scene.add(pole,head);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const l=new THREE.PointLight(0xfff0c0,.7,26); l.position.set(lx,7,lz); scene.add(l); });</p>
+<p class="p2"><br></p>
+<p class="p1">// ============================================================</p>
+<p class="p1">//<span class="Apple-converted-space">  </span>TEGENSTANDER-MODEL</p>
+<p class="p1">// ============================================================</p>
+<p class="p1">function buildOperator(color){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const g = new THREE.Group();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const bodyMat=new THREE.MeshLambertMaterial({color});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const skinMat=new THREE.MeshLambertMaterial({color:0xd8a878});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const body=new THREE.Mesh(new THREE.CylinderGeometry(.42,.5,1.2,10),bodyMat); body.position.y=1.1; body.castShadow=true;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const vest=new THREE.Mesh(new THREE.CylinderGeometry(.48,.52,.7,10),new THREE.MeshLambertMaterial({color:0x2a2a1e})); vest.position.y=1.25;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const head=new THREE.Mesh(new THREE.SphereGeometry(.38,12,12),skinMat); head.position.y=2.02; head.castShadow=true; head.userData.part='head';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const helm=new THREE.Mesh(new THREE.SphereGeometry(.41,12,12,0,Math.PI*2,0,Math.PI/1.9),new THREE.MeshLambertMaterial({color})); helm.position.y=2.08; helm.userData.part='head';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const legMat=new THREE.MeshLambertMaterial({color:0x28282e});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const legL=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.6,8),legMat); const legR=legL.clone();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>legL.position.set(-.2,.3,0); legR.position.set(.2,.3,0);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const gun=new THREE.Group();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>gun.add(new THREE.Mesh(new THREE.BoxGeometry(.12,.14,.9),new THREE.MeshLambertMaterial({color:0x111})));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>gun.position.set(.25,1.45,.45);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const flash=new THREE.Mesh(new THREE.SphereGeometry(.16,6,6),new THREE.MeshBasicMaterial({color:0xffcc44,transparent:true,opacity:0}));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>flash.position.set(.25,1.45,.98);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const armR=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.6,8),skinMat); armR.position.set(.42,1.4,.2); armR.rotation.x=1.2;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>// Naamplaatje boven het hoofd</p>
+<p class="p1"><span class="Apple-converted-space">  </span>g.add(body,vest,head,helm,legL,legR,gun,flash,armR);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>g.traverse(c=&gt;{ if(c.isMesh &amp;&amp; !c.userData.part) c.userData.part='body'; });</p>
+<p class="p1"><span class="Apple-converted-space">  </span>g.userData={flash,legL,legR,walkPhase:0};</p>
+<p class="p1"><span class="Apple-converted-space">  </span>return g;</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">const remote = {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>group: buildOperator(0xb03040),</p>
+<p class="p1"><span class="Apple-converted-space">  </span>pos: new THREE.Vector3(0,0,-22), <span class="Apple-converted-space">  </span>// doelpositie van het netwerk</p>
+<p class="p1"><span class="Apple-converted-space">  </span>yaw: 0, sneak:false, moving:false, alive:true, visible:false</p>
+<p class="p1">};</p>
+<p class="p1">remote.group.position.copy(remote.pos);</p>
+<p class="p1">remote.group.visible = false;</p>
+<p class="p1">scene.add(remote.group);</p>
+<p class="p1">remote.group.traverse(c=&gt;{ if(c.isMesh) c.userData.isRemote = true; });</p>
+<p class="p2"><br></p>
+<p class="p1">// ============================================================</p>
+<p class="p1">//<span class="Apple-converted-space">  </span>WAPEN</p>
+<p class="p1">// ============================================================</p>
+<p class="p1">const weapon=new THREE.Group();</p>
+<p class="p1">const HIP=new THREE.Vector3(.28,-.26,-.55), ADSP=new THREE.Vector3(0,-.105,-.42);</p>
+<p class="p1">{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const dark=new THREE.MeshLambertMaterial({color:0x1c1c1f}), dark2=new THREE.MeshLambertMaterial({color:0x2a2a2e});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const recv=new THREE.Mesh(new THREE.BoxGeometry(.09,.12,.52),dark);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.3,10),dark); barrel.rotation.x=Math.PI/2; barrel.position.set(0,.015,-.4);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const grip=new THREE.Mesh(new THREE.BoxGeometry(.07,.16,.09),dark2); grip.position.set(0,-.13,.12); grip.rotation.x=.25;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const mag=new THREE.Mesh(new THREE.BoxGeometry(.06,.26,.1),dark2); mag.position.set(0,-.17,-.08); mag.rotation.x=-.35;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const stock=new THREE.Mesh(new THREE.BoxGeometry(.07,.09,.22),dark2); stock.position.set(0,0,.34);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const sr=new THREE.Mesh(new THREE.BoxGeometry(.05,.05,.06),dark); sr.position.set(0,.09,.05);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const sf=new THREE.Mesh(new THREE.BoxGeometry(.04,.06,.05),dark); sf.position.set(0,.095,-.3);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const mf=new THREE.Mesh(new THREE.SphereGeometry(.09,6,6),new THREE.MeshBasicMaterial({color:0xffdd66,transparent:true,opacity:0})); mf.position.set(0,.015,-.58);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>weapon.add(recv,barrel,grip,mag,stock,sr,sf,mf);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>weapon.userData.muzzle=mf; weapon.position.copy(HIP);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>camera.add(weapon);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const wl=new THREE.PointLight(0xffffff,.25,2.5); wl.position.set(0,.2,-.3); camera.add(wl);</p>
+<p class="p1">}</p>
+<p class="p1">scene.add(camera);</p>
+<p class="p2"><br></p>
+<p class="p1">// ============================================================</p>
+<p class="p1">//<span class="Apple-converted-space">  </span>GELUID</p>
+<p class="p1">// ============================================================</p>
+<p class="p1">let audioCtx;</p>
+<p class="p1">function ctxA(){ return audioCtx ||= new (window.AudioContext||window.webkitAudioContext)(); }</p>
+<p class="p1">function gunSfx(vol=.18){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const c=ctxA();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const buf=c.createBuffer(1,Math.floor(c.sampleRate*.09),c.sampleRate), d=buf.getChannelData(0);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>for(let i=0;i&lt;d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2.5);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const s=c.createBufferSource(); s.buffer=buf;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const g=c.createGain(); g.gain.value=vol;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const f=c.createBiquadFilter(); f.type='lowpass'; f.frequency.value=2200;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>s.connect(f).connect(g).connect(c.destination); s.start();</p>
+<p class="p1">}</p>
+<p class="p1">function tone(freq,dur=.15,vol=.2,type='triangle'){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const c=ctxA(), o=c.createOscillator(), g=c.createGain();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>o.type=type; o.frequency.setValueAtTime(freq,c.currentTime);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>o.frequency.exponentialRampToValueAtTime(Math.max(freq*.5,40),c.currentTime+dur);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>g.gain.setValueAtTime(vol,c.currentTime); g.gain.exponentialRampToValueAtTime(.001,c.currentTime+dur);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime+dur);</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">const particles=[];</p>
+<p class="p1">function burst(pos,color,n=10){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>for(let i=0;i&lt;n;i++){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const p=new THREE.Mesh(new THREE.BoxGeometry(.12,.12,.12),new THREE.MeshBasicMaterial({color:Math.random()&lt;.5?color:0xffe0aa}));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>p.position.copy(pos);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>p.userData.vel=new THREE.Vector3(rnd(-1,1),rnd(.2,1.3),rnd(-1,1)).multiplyScalar(rnd(3,7));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>p.userData.life=.8; scene.add(p); particles.push(p);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">// ============================================================</p>
+<p class="p1">//<span class="Apple-converted-space">  </span>SPELER</p>
+<p class="p1">// ============================================================</p>
+<p class="p1">const EYE_STAND=1.7, EYE_SNEAK=1.05;</p>
+<p class="p1">const SPAWNS=[</p>
+<p class="p1"><span class="Apple-converted-space">  </span>{x:0,z:20,f:0},{x:-10,z:-9,f:0},{x:10,z:8,f:0},</p>
+<p class="p1"><span class="Apple-converted-space">  </span>{x:-8,z:9,f:1},{x:6,z:-9,f:1},{x:-6,z:-10,f:1},</p>
+<p class="p1"><span class="Apple-converted-space">  </span>{x:-7,z:8,f:2},{x:9,z:-9,f:2},{x:5,z:9,f:2}</p>
+<p class="p1">];</p>
+<p class="p1">let yaw=Math.PI, pitch=0;</p>
+<p class="p1">const keys={};</p>
+<p class="p1">const player={pos:new THREE.Vector3(0,1.7,20),feetY:0,eye:EYE_STAND,r:.45,hp:100,alive:true};</p>
+<p class="p1">let velY=0,onGround=true;</p>
+<p class="p1">let playing=false, matchOver=false;</p>
+<p class="p1">let ammo=30, reloading=0, fireCd=0, firing=false;</p>
+<p class="p1">let adsing=false, adsT=0, sneaking=false, recoil=0;</p>
+<p class="p1">let myScore=0, theirScore=0;</p>
+<p class="p1">let respawnT=0;</p>
+<p class="p1">const WIN_SCORE=10;</p>
+<p class="p2"><br></p>
+<p class="p1">document.addEventListener('keydown',e=&gt;{ keys[e.code]=true;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(e.code==='KeyR'&amp;&amp;playing&amp;&amp;!reloading&amp;&amp;ammo&lt;30){ reloading=1.7; tone(220,.3,.15,'square'); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(e.code==='Space') e.preventDefault(); });</p>
+<p class="p1">document.addEventListener('keyup',e=&gt;keys[e.code]=false);</p>
+<p class="p1">document.addEventListener('mousemove',e=&gt;{ if(!playing) return;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const sens=adsT&gt;.5?.0011:.0021;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>yaw-=e.movementX*sens;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>pitch=Math.max(-1.5,Math.min(1.5,pitch-e.movementY*sens)); });</p>
+<p class="p1">document.addEventListener('mousedown',e=&gt;{ if(e.button===0) firing=true; if(e.button===2) adsing=true; });</p>
+<p class="p1">document.addEventListener('mouseup',e=&gt;{ if(e.button===0) firing=false; if(e.button===2) adsing=false; });</p>
+<p class="p2"><br></p>
+<p class="p1">function inRect(x,z,r){ return x&gt;r.x0&amp;&amp;x&lt;r.x1&amp;&amp;z&gt;r.z0&amp;&amp;z&lt;r.z1; }</p>
+<p class="p1">function groundHeight(x,z,feet){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const inside=Math.abs(x)&lt;12.8&amp;&amp;Math.abs(z)&lt;12.8;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const cands=[0];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(inside){ if(!inRect(x,z,HOLE1)) cands.push(F[1]); if(!inRect(x,z,HOLE2)) cands.push(F[2]); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(x&gt;9.0&amp;&amp;x&lt;13&amp;&amp;z&gt;-2.6&amp;&amp;z&lt;10.6){ const t=Math.min(Math.max((10-z)/12,0),1); cands.push(F[0]+t*(F[1]-F[0])); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(x&gt;-13&amp;&amp;x&lt;-9.0&amp;&amp;z&gt;-10.6&amp;&amp;z&lt;2.6){ const t=Math.min(Math.max((z+10)/12,0),1); cands.push(F[1]+t*(F[2]-F[1])); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>platforms.forEach(p=&gt;{ if(x&gt;p.x0-.3&amp;&amp;x&lt;p.x1+.3&amp;&amp;z&gt;p.z0-.3&amp;&amp;z&lt;p.z1+.3) cands.push(p.top); });</p>
+<p class="p1"><span class="Apple-converted-space">  </span>let best=0; cands.forEach(h=&gt;{ if(h&lt;=feet+.6&amp;&amp;h&gt;best) best=h; });</p>
+<p class="p1"><span class="Apple-converted-space">  </span>return best;</p>
+<p class="p1">}</p>
+<p class="p1">function collide(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const feet=player.feetY, top=player.feetY+player.eye+.2;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>colliders.forEach(c=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(top&lt;c.min.y||feet&gt;c.max.y-.06) return;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const nx=Math.max(c.min.x,Math.min(player.pos.x,c.max.x));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const nz=Math.max(c.min.z,Math.min(player.pos.z,c.max.z));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const dx=player.pos.x-nx, dz=player.pos.z-nz, dsq=dx*dx+dz*dz;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(dsq&lt;player.r*player.r){ const dist=Math.sqrt(dsq)||.001, push=player.r-dist;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>player.pos.x+=dx/dist*push; player.pos.z+=dz/dist*push; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">// ============================================================</p>
+<p class="p1">//<span class="Apple-converted-space">  </span>HUD</p>
+<p class="p1">// ============================================================</p>
+<p class="p1">const hpbar=document.getElementById('hpbar'), hplabel=document.getElementById('hplabel');</p>
+<p class="p1">const ammoEl=document.getElementById('ammo'), reloadHint=document.getElementById('reloadHint');</p>
+<p class="p1">const hitmarker=document.getElementById('hitmarker'), damageFlash=document.getElementById('damageFlash');</p>
+<p class="p1">const stanceEl=document.getElementById('stance'), crosshair=document.getElementById('crosshair');</p>
+<p class="p1">const adsDot=document.getElementById('adsDot'), vignette=document.getElementById('vignette');</p>
+<p class="p1">const bigMsg=document.getElementById('bigMsg'), killfeed=document.getElementById('killfeed');</p>
+<p class="p1">const myScoreEl=document.getElementById('myScore'), theirScoreEl=document.getElementById('theirScore');</p>
+<p class="p1">const netinfo=document.getElementById('netinfo');</p>
+<p class="p1">const deadScreen=document.getElementById('deadScreen'), deadText=document.getElementById('deadText');</p>
+<p class="p2"><br></p>
+<p class="p1">function updateHUD(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>hpbar.style.width=Math.max(player.hp,0)+'%';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>hplabel.textContent='OPERATOR — '+Math.max(player.hp,0)+' HP';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ammoEl.innerHTML=(reloading&gt;0?'⟳':ammo)+' &lt;small&gt;/ ∞ &amp;nbsp;MP5&lt;/small&gt;';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>reloadHint.style.opacity=(ammo&lt;=8&amp;&amp;!reloading)?1:0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>stanceEl.textContent=sneaking?'🤫 SLUIPEND':'🏃 STAAND';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>stanceEl.style.color=sneaking?'#ffcf5c':'#7CFC00';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>myScoreEl.textContent=myScore; theirScoreEl.textContent=theirScore;</p>
+<p class="p1">}</p>
+<p class="p1">function showMsg(text,color='#ff3b3b',ms=900){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>bigMsg.textContent=text; bigMsg.style.color=color; bigMsg.style.opacity=1;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>clearTimeout(showMsg._t); showMsg._t=setTimeout(()=&gt;bigMsg.style.opacity=0,ms);</p>
+<p class="p1">}</p>
+<p class="p1">function feed(text,color='#cde'){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const d=document.createElement('div'); d.innerHTML=text; d.style.color=color;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>killfeed.prepend(d);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>setTimeout(()=&gt;d.remove(),4500);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>while(killfeed.children.length&gt;4) killfeed.lastChild.remove();</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">// ============================================================</p>
+<p class="p1">//<span class="Apple-converted-space">  </span>NETWERK (PeerJS — peer-to-peer, geen eigen server nodig)</p>
+<p class="p1">// ============================================================</p>
+<p class="p1">let peer=null, conn=null, isHost=false, connected=false, pingMs=0;</p>
+<p class="p1">const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';</p>
+<p class="p1">function makeCode(){ let s=''; for(let i=0;i&lt;5;i++) s+=CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]; return s; }</p>
+<p class="p1">const PREFIX='nachtstorm-duel-';</p>
+<p class="p2"><br></p>
+<p class="p1">const stepMenu=document.getElementById('stepMenu'), stepHost=document.getElementById('stepHost');</p>
+<p class="p1">const stepJoin=document.getElementById('stepJoin'), stepReady=document.getElementById('stepReady');</p>
+<p class="p1">const overlay=document.getElementById('overlay'), codeBox=document.getElementById('codeBox');</p>
+<p class="p1">const statusEl=document.getElementById('status'), status2El=document.getElementById('status2');</p>
+<p class="p1">const joinInput=document.getElementById('joinInput'), readyTitle=document.getElementById('readyTitle'), readyText=document.getElementById('readyText');</p>
+<p class="p2"><br></p>
+<p class="p1">function showStep(el){ [stepMenu,stepHost,stepJoin,stepReady].forEach(s=&gt;s.classList.remove('active')); el.classList.add('active'); }</p>
+<p class="p2"><br></p>
+<p class="p1">document.getElementById('hostBtn').onclick=()=&gt;{ showStep(stepHost); startHost(); };</p>
+<p class="p1">document.getElementById('joinBtn').onclick=()=&gt;{ showStep(stepJoin); joinInput.focus(); };</p>
+<p class="p1">document.getElementById('backBtn1').onclick=()=&gt;{ if(peer){peer.destroy(); peer=null;} showStep(stepMenu); };</p>
+<p class="p1">document.getElementById('backBtn2').onclick=()=&gt;{ if(peer){peer.destroy(); peer=null;} showStep(stepMenu); };</p>
+<p class="p1">document.getElementById('connectBtn').onclick=()=&gt;startJoin(joinInput.value.trim().toUpperCase());</p>
+<p class="p1">joinInput.addEventListener('keydown',e=&gt;{ if(e.key==='Enter') startJoin(joinInput.value.trim().toUpperCase()); });</p>
+<p class="p1">document.getElementById('playBtn').onclick=()=&gt;document.body.requestPointerLock();</p>
+<p class="p2"><br></p>
+<p class="p1">function startHost(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>isHost=true;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const code=makeCode();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>codeBox.textContent=code;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>statusEl.textContent='Verbinding voorbereiden...';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>peer=new Peer(PREFIX+code,{debug:0});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>peer.on('open',()=&gt;statusEl.textContent='⏳ Wachten op je tegenstander...');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>peer.on('connection',c=&gt;{ conn=c; wireConn(); });</p>
+<p class="p1"><span class="Apple-converted-space">  </span>peer.on('error',err=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(err.type==='unavailable-id'){ peer.destroy(); startHost(); }<span class="Apple-converted-space">  </span>// code al bezet: nieuwe proberen</p>
+<p class="p1"><span class="Apple-converted-space">    </span>else statusEl.textContent='⚠ Fout: '+err.type;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p1">}</p>
+<p class="p1">function startJoin(code){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(code.length!==5){ status2El.textContent='⚠ Code moet 5 tekens zijn.'; return; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>isHost=false;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>status2El.textContent='Verbinden...';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>peer=new Peer({debug:0});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>peer.on('open',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>conn=peer.connect(PREFIX+code,{reliable:true});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>wireConn();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>setTimeout(()=&gt;{ if(!connected) status2El.textContent='⚠ Geen antwoord. Klopt de code? Is de host nog open?'; },6000);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>peer.on('error',err=&gt;status2El.textContent='⚠ Fout: '+err.type);</p>
+<p class="p1">}</p>
+<p class="p1">function wireConn(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>conn.on('open',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>connected=true;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>remote.group.visible=true;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>readyTitle.textContent='✅ VERBONDEN';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>readyText.innerHTML='Je tegenstander is er. Eerste tot &lt;b&gt;'+WIN_SCORE+' kills&lt;/b&gt; wint. Klik om te starten.';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>showStep(stepReady);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>setInterval(()=&gt;{ if(connected) send({t:'ping',time:Date.now()}); },2000);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>conn.on('data',onData);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>conn.on('close',()=&gt;{ connected=false; onDisconnect(); });</p>
+<p class="p1"><span class="Apple-converted-space">  </span>conn.on('error',()=&gt;{ connected=false; onDisconnect(); });</p>
+<p class="p1">}</p>
+<p class="p1">function onDisconnect(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>playing=false; document.exitPointerLock();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>remote.group.visible=false;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>readyTitle.textContent='🔌 VERBINDING VERBROKEN';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>readyText.textContent='Je tegenstander is weg. Herlaad de pagina om opnieuw te spelen.';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>document.getElementById('playBtn').disabled=true;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>showStep(stepReady); overlay.classList.remove('hidden');</p>
+<p class="p1">}</p>
+<p class="p1">function send(obj){ if(conn&amp;&amp;connected){ try{ conn.send(obj); }catch(e){} } }</p>
+<p class="p2"><br></p>
+<p class="p1">function onData(m){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>switch(m.t){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>case 'st': // state van de tegenstander</p>
+<p class="p1"><span class="Apple-converted-space">      </span>remote.pos.set(m.p[0],m.p[1],m.p[2]);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>remote.yaw=m.y; remote.sneak=m.s; remote.moving=m.m; remote.alive=m.a;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>remote.group.visible = m.a;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>break;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>case 'shot': { // hij schiet: flits + geluid op afstand</p>
+<p class="p1"><span class="Apple-converted-space">      </span>remote.group.userData.flash.material.opacity=1;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>setTimeout(()=&gt;remote.group.userData.flash.material.opacity=0,60);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const d=remote.group.position.distanceTo(player.pos);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>gunSfx(Math.max(.02,.2-d*.006));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>break; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>case 'hit': // hij claimt een treffer op mij</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(!player.alive) break;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>player.hp-=m.dmg;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>damageFlash.style.opacity=1; setTimeout(()=&gt;damageFlash.style.opacity=0,220);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>tone(110,.2,.25,'sawtooth');</p>
+<p class="p1"><span class="Apple-converted-space">      </span>updateHUD();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(player.hp&lt;=0) die(m.hs);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>break;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>case 'died': // hij is dood → punt voor mij</p>
+<p class="p1"><span class="Apple-converted-space">      </span>myScore++;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>feed(m.hs?'💀 &lt;b&gt;HEADSHOT&lt;/b&gt; — jij scoort!':'✔ Kill — jij scoort!','#7CFC00');</p>
+<p class="p1"><span class="Apple-converted-space">      </span>showMsg(m.hs?'💀 HEADSHOT KILL':'✔ KILL','#7CFC00',900);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>tone(700,.2,.22);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>updateHUD();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(myScore&gt;=WIN_SCORE) endMatch(true);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>break;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>case 'ping': send({t:'pong',time:m.time}); break;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>case 'pong': pingMs=Date.now()-m.time; break;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>case 'over': endMatch(m.win); break;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">// ============================================================</p>
+<p class="p1">//<span class="Apple-converted-space">  </span>SCHIETEN (schutter bepaalt de treffer, meldt het aan de ander)</p>
+<p class="p1">// ============================================================</p>
+<p class="p1">const raycaster=new THREE.Raycaster();</p>
+<p class="p1">function shoot(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(ammo&lt;=0){ if(!reloading){ reloading=1.7; tone(160,.1,.1,'square'); } return; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>ammo--; recoil=1; gunSfx();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>weapon.userData.muzzle.material.opacity=1;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>setTimeout(()=&gt;weapon.userData.muzzle.material.opacity=0,45);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>send({t:'shot'});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>const spread=(adsT&gt;.6?.004:.022)*(sneaking?.6:1);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>raycaster.setFromCamera(new THREE.Vector2(rnd(-spread,spread),rnd(-spread,spread)),camera);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const targets=[...solids];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(remote.group.visible &amp;&amp; remote.alive) remote.group.traverse(c=&gt;{ if(c.isMesh) targets.push(c); });</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const hits=raycaster.intersectObjects(targets);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(!hits.length) return;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const h=hits[0];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(h.object.userData.isRemote){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const hs = h.object.userData.part==='head';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>hitmarker.style.opacity=1; setTimeout(()=&gt;hitmarker.style.opacity=0,90);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>burst(h.point,hs?0xff2222:0x883333,hs?14:6);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>tone(hs?520:300,.07,.12);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>send({t:'hit',dmg:hs?100:34,hs});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>} else burst(h.point,0x999999,4);</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function die(headshot){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>player.alive=false; playing=true; // blijft in pointer lock, maar je kunt niets</p>
+<p class="p1"><span class="Apple-converted-space">  </span>theirScore++;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>deadScreen.style.opacity=1;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>deadText.textContent = headshot ? '💀 HEADSHOT — je bent uitgeschakeld' : '☠ NEERGESCHOTEN';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>feed(headshot?'💀 Je kreeg een &lt;b&gt;headshot&lt;/b&gt;':'☠ Je bent neergeschoten','#ff5c5c');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>tone(120,.5,.25,'sawtooth');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>respawnT=3;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>send({t:'died',hs:!!headshot});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>updateHUD();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(theirScore&gt;=WIN_SCORE) setTimeout(()=&gt;endMatch(false),400);</p>
+<p class="p1">}</p>
+<p class="p1">function respawn(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const s=SPAWNS[Math.floor(Math.random()*SPAWNS.length)];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>player.pos.set(s.x,0,s.z); player.feetY=F[s.f]; player.eye=EYE_STAND;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>player.hp=100; player.alive=true; ammo=30; reloading=0; velY=0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>yaw=Math.atan2(-s.x,-s.z)+Math.PI; pitch=0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>deadScreen.style.opacity=0;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>updateHUD();</p>
+<p class="p1">}</p>
+<p class="p1">function endMatch(win){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(matchOver) return;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>matchOver=true; playing=false;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>document.exitPointerLock();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(win) send({t:'over',win:false});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>readyTitle.textContent = win ? '🏆 GEWONNEN!' : '💀 VERLOREN';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>readyTitle.style.color = win ? '#7CFC00' : '#ff5c5c';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>readyText.innerHTML = 'Eindstand: &lt;b&gt;'+myScore+' — '+theirScore+'&lt;/b&gt;&lt;br&gt;Herlaad de pagina voor een rematch.';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>document.getElementById('playBtn').disabled=true;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>showStep(stepReady); overlay.classList.remove('hidden');</p>
+<p class="p1"><span class="Apple-converted-space">  </span>tone(win?600:120,.6,.25,win?'triangle':'sawtooth');</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">document.addEventListener('pointerlockchange',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(document.pointerLockElement){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(matchOver) return;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>playing=true; overlay.classList.add('hidden');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(!player.alive &amp;&amp; respawnT&lt;=0) respawn();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(player.hp===100 &amp;&amp; myScore===0 &amp;&amp; theirScore===0) respawn();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>} else {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>playing=false; firing=false; adsing=false;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(!matchOver &amp;&amp; connected){ overlay.classList.remove('hidden'); showStep(stepReady);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>readyTitle.textContent='⏸ GEPAUZEERD'; readyText.textContent='Je tegenstander speelt door! Klik snel om terug te keren.'; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">});</p>
+<p class="p2"><br></p>
+<p class="p1">// ============================================================</p>
+<p class="p1">//<span class="Apple-converted-space">  </span>LOOP</p>
+<p class="p1">// ============================================================</p>
+<p class="p1">let netTimer=0;</p>
+<p class="p1">const clock=new THREE.Clock();</p>
+<p class="p1">function animate(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>requestAnimationFrame(animate);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const dt=Math.min(clock.getDelta(),.05), t=clock.elapsedTime;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>lampsList.forEach((L,i)=&gt;{ if(L.flicker){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const f=.7+Math.sin(t*17+i*3)*.15+(Math.random()&lt;.02?-.5:0);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>L.light.intensity=L.base*Math.max(f,.15); } });</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(playing &amp;&amp; !matchOver){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(!player.alive){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>respawnT-=dt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>deadText.textContent='☠ RESPAWN OVER '+Math.ceil(respawnT)+'s';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(respawnT&lt;=0) respawn();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>} else {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>sneaking=!!keys['ShiftLeft']||!!keys['ShiftRight'];</p>
+<p class="p1"><span class="Apple-converted-space">      </span>player.eye+=((sneaking?EYE_SNEAK:EYE_STAND)-player.eye)*Math.min(dt*9,1);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>adsT+=((adsing&amp;&amp;reloading&lt;=0?1:0)-adsT)*Math.min(dt*11,1);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>camera.fov=75-adsT*30; camera.updateProjectionMatrix();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>crosshair.style.opacity=1-adsT*1.6;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>adsDot.style.opacity=adsT&gt;.7?1:0;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>vignette.style.opacity=adsT*.8;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>fireCd-=dt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(reloading&gt;0){ reloading-=dt; if(reloading&lt;=0){ reloading=0; ammo=30; tone(500,.1,.12); updateHUD(); } }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>else if(firing&amp;&amp;fireCd&lt;=0){ fireCd=.092; shoot(); updateHUD(); }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const speed=sneaking?3.6:(adsT&gt;.5?5.2:8.5);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const fwd=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const move=new THREE.Vector3();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(keys['KeyW']) move.add(fwd);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(keys['KeyS']) move.sub(fwd);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(keys['KeyD']) move.add(right);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(keys['KeyA']) move.sub(right);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(move.lengthSq()) move.normalize().multiplyScalar(speed*dt);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>player.pos.add(move); collide();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(keys['Space']&amp;&amp;onGround){ velY=10.5; onGround=false; }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>velY-=26*dt; player.feetY+=velY*dt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const gh=groundHeight(player.pos.x,player.pos.z,player.feetY);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(player.feetY&lt;=gh){ player.feetY=gh; velY=0; onGround=true; } else onGround=false;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const dd=Math.hypot(player.pos.x,player.pos.z);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if(dd&gt;85){ player.pos.x*=85/dd; player.pos.z*=85/dd; }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>player.pos.y=player.feetY+player.eye;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// ~20x per seconde je positie doorsturen</p>
+<p class="p1"><span class="Apple-converted-space">    </span>netTimer-=dt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(netTimer&lt;=0){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>netTimer=.05;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const moving=!!(keys['KeyW']||keys['KeyA']||keys['KeyS']||keys['KeyD']);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>send({t:'st',p:[player.pos.x,player.feetY,player.pos.z],y:yaw,s:sneaking,m:moving,a:player.alive});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>netinfo.textContent='verbonden · ping '+(pingMs||'—')+' ms';</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// Tegenstander soepel interpoleren (anders teleporteert hij)</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(remote.group.visible){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>remote.group.position.lerp(remote.pos, Math.min(dt*14,1));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>let dy=remote.yaw-remote.group.rotation.y;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>while(dy&gt;Math.PI) dy-=Math.PI*2; while(dy&lt;-Math.PI) dy+=Math.PI*2;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>remote.group.rotation.y += dy*Math.min(dt*14,1);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const u=remote.group.userData;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(remote.moving){ u.walkPhase+=dt*(remote.sneak?5:11);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>u.legL.rotation.x=Math.sin(u.walkPhase)*.5; u.legR.rotation.x=-Math.sin(u.walkPhase)*.5; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>else { u.legL.rotation.x*=.85; u.legR.rotation.x*=.85; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>remote.group.scale.y = remote.sneak ? .72 : 1; <span class="Apple-converted-space">  </span>// hurkt hij, dan is hij kleiner</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>camera.position.copy(player.pos);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>camera.rotation.set(0,0,0);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>camera.rotateY(yaw); camera.rotateX(pitch);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>recoil=Math.max(0,recoil-dt*8);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const moving=playing&amp;&amp;player.alive&amp;&amp;(keys['KeyW']||keys['KeyA']||keys['KeyS']||keys['KeyD']);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const bob=moving?Math.sin(t*(sneaking?5:10))*(sneaking?.005:.012):Math.sin(t*2)*.004;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const tgt=HIP.clone().lerp(ADSP,adsT);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>weapon.position.set(tgt.x,tgt.y+bob*(1-adsT*.7),tgt.z+recoil*.06);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>weapon.rotation.x=recoil*(adsT&gt;.5?.05:.12);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>weapon.rotation.y=.03*(1-adsT);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(reloading&gt;0){ weapon.rotation.x=.6; weapon.position.y=tgt.y-.12; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>weapon.visible = player.alive;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>for(let i=particles.length-1;i&gt;=0;i--){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const p=particles[i];</p>
+<p class="p1"><span class="Apple-converted-space">    </span>p.userData.vel.y-=14*dt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>p.position.addScaledVector(p.userData.vel,dt);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>p.userData.life-=dt*1.4;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>p.scale.setScalar(Math.max(p.userData.life,.01));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if(p.userData.life&lt;=0){ scene.remove(p); particles.splice(i,1); }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>renderer.render(scene,camera);</p>
+<p class="p1">}</p>
+<p class="p1">updateHUD();</p>
+<p class="p1">animate();</p>
+<p class="p2"><br></p>
+<p class="p1">addEventListener('resize',()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>camera.aspect=innerWidth/innerHeight;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>camera.updateProjectionMatrix();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>renderer.setSize(innerWidth,innerHeight);</p>
+<p class="p1">});</p>
+<p class="p1">&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
