@@ -57,6 +57,10 @@
   #status, #status2 { font-size:15px; color:#ffcf5c; margin-top:12px; min-height:22px; }
   .hidden { display:none !important; }
   kbd { background:#223; border:1px solid #445; border-radius:4px; padding:1px 6px; font-size:13px; }
+  .btn.small { padding:9px 22px; font-size:15px; }
+  .btn.grey { background:#445; color:#ccd; box-shadow:none; }
+  #mapInput { width:560px; max-width:86vw; height:90px; font-family:ui-monospace,monospace; font-size:10px;
+    padding:8px; border-radius:6px; background:#0e1017; color:#8fe36a; border:1px solid #2f3646; margin-bottom:8px; }
   #fatal { display:none; max-width:720px; margin-top:18px; padding:14px 18px; border-radius:8px;
     background:rgba(120,20,20,.85); border:1px solid #ff6b6b; color:#ffdede; font-size:14px; text-align:left; }
 </style>
@@ -94,6 +98,17 @@
     <div style="margin-top:18px">
       <button class="btn" id="hostBtn">🎮 SPEL HOSTEN</button>
       <button class="btn alt" id="joinBtn">🔗 MEEDOEN</button>
+    </div>
+    <div style="margin-top:14px">
+      <button class="btn small" id="mapBtn">🗺 EIGEN MAP LADEN</button>
+      <div id="mapInfo" style="font-size:13px;color:#7CFC00;margin-top:8px">Map: standaard kantoorpand</div>
+    </div>
+    <div id="mapLoader" style="display:none;margin-top:12px">
+      <textarea id="mapInput" placeholder="Plak hier de code uit de Map Editor..."></textarea>
+      <div>
+        <button class="btn small" id="mapLoadBtn">✔ LADEN</button>
+        <button class="btn small grey" id="mapDefaultBtn">↺ STANDAARD</button>
+      </div>
     </div>
   </div>
   <div class="step" id="stepHost">
@@ -168,6 +183,26 @@ document.getElementById('backBtn2').onclick=()=>{ if(peer){peer.destroy(); peer=
 document.getElementById('connectBtn').onclick=()=>startJoin(joinInput.value.trim().toUpperCase());
 joinInput.addEventListener('keydown',e=>{ if(e.key==='Enter') startJoin(joinInput.value.trim().toUpperCase()); });
 document.getElementById('playBtn').onclick=()=>document.body.requestPointerLock();
+document.getElementById('mapBtn').onclick=()=>{
+  const box=document.getElementById('mapLoader');
+  box.style.display=box.style.display==='none'?'block':'none';
+};
+document.getElementById('mapLoadBtn').onclick=()=>{
+  const info=document.getElementById('mapInfo');
+  try{
+    const m=JSON.parse(document.getElementById('mapInput').value);
+    if(!m.walls||!m.walls.length) throw new Error('geen muren gevonden');
+    buildFromMap(m);
+    info.style.color='#7CFC00';
+    document.getElementById('mapLoader').style.display='none';
+  }catch(e){ info.style.color='#ff5c5c'; info.textContent='⚠ Map niet geldig: '+e.message; }
+};
+document.getElementById('mapDefaultBtn').onclick=()=>{
+  clearWorld(); buildDefaultMap(); customMap=null;
+  const info=document.getElementById('mapInfo');
+  info.style.color='#7CFC00'; info.textContent='Map: standaard kantoorpand';
+  document.getElementById('mapLoader').style.display='none';
+};
 
 function startHost(){
   const code=makeCode(); codeBox.textContent=code;
@@ -188,6 +223,7 @@ function startJoin(code){
 function wireConn(){
   conn.on('open',()=>{
     connected=true; remote.group.visible=true;
+    if(customMap) send({t:'map',m:customMap});   // host bepaalt de map
     readyTitle.textContent='✅ VERBONDEN';
     readyText.innerHTML='Eerste tot <b>'+WIN_SCORE+' kills</b> wint. Klik om te starten.';
     showStep(stepReady);
@@ -234,6 +270,10 @@ function onData(m){
     case 'boom': { const pos=new THREE.Vector3(m.p[0],m.p[1],m.p[2]);
       for(let i=rockets.length-1;i>=0;i--) if(!rockets[i].mine){ scene.remove(rockets[i].mesh); rockets.splice(i,1); }
       explosionFX(pos); break; }
+    case 'map':
+      try{ buildFromMap(m.m); showMsg('🗺 Map van de host geladen','#7CFC00',1500); }
+      catch(e){ showFatal('Map van de host kon niet geladen worden: '+e.message); }
+      break;
     case 'ping': send({t:'pong',time:m.time}); break;
     case 'pong': pingMs=Date.now()-m.time; break;
     case 'over': endMatch(m.win); break;
@@ -281,13 +321,15 @@ plaza.rotation.x=-Math.PI/2; plaza.position.y=.01; plaza.receiveShadow=true; sce
 //  BOUWSTENEN
 // ============================================================
 const F=[0,4.2,8.4], CEIL=12.6, WH=4.2;
-const solids=[], colliders=[], platforms=[];
+let solids=[], colliders=[], platforms=[];
+// Alles van het gebouw komt in deze groep, zodat we bij een eigen map alles in één keer kunnen weggooien.
+const world=new THREE.Group(); scene.add(world);
 
 function addBox(x,y,z,w,h,d,mat,opts={}){
   if(w<=.02||h<=.02||d<=.02) return null;
   const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
   m.position.set(x,y,z); m.castShadow=m.receiveShadow=true;
-  scene.add(m); solids.push(m);
+  world.add(m); solids.push(m);
   if(opts.collide!==false) colliders.push({min:new THREE.Vector3(x-w/2,y-h/2,z-d/2),max:new THREE.Vector3(x+w/2,y+h/2,z+d/2)});
   if(opts.platform) platforms.push({x0:x-w/2,x1:x+w/2,z0:z-d/2,z1:z+d/2,top:y+h/2});
   return m;
@@ -295,20 +337,20 @@ function addBox(x,y,z,w,h,d,mat,opts={}){
 function addCyl(x,y,z,r,h,mat,opts={}){
   const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,12),mat);
   m.position.set(x,y,z); m.castShadow=m.receiveShadow=true;
-  scene.add(m); solids.push(m);
+  world.add(m); solids.push(m);
   if(opts.collide!==false) colliders.push({min:new THREE.Vector3(x-r,y-h/2,z-r),max:new THREE.Vector3(x+r,y+h/2,z+r)});
   if(opts.platform) platforms.push({x0:x-r,x1:x+r,z0:z-r,z1:z+r,top:y+h/2});
   return m;
 }
 function flat(x,y,z,w,d,color){   // vloerkleed, puur decoratief
   const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),new THREE.MeshLambertMaterial({color}));
-  m.rotation.x=-Math.PI/2; m.position.set(x,y+.02,z); m.receiveShadow=true; scene.add(m); return m;
+  m.rotation.x=-Math.PI/2; m.position.set(x,y+.02,z); m.receiveShadow=true; world.add(m); return m;
 }
 function panel(x,y,z,w,h,rotY,color,emissive){ // schilderij/whiteboard/tv-scherm aan de muur
   const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h), emissive
     ? new THREE.MeshBasicMaterial({color})
     : new THREE.MeshLambertMaterial({color}));
-  m.position.set(x,y,z); m.rotation.y=rotY; scene.add(m); return m;
+  m.position.set(x,y,z); m.rotation.y=rotY; world.add(m); return m;
 }
 
 const wallMat=new THREE.MeshLambertMaterial({color:0x8a8578});
@@ -346,55 +388,26 @@ function buildWall(axis,fixed,from,to,floorY,openings=[],mat=wallMat,thick=.4){
   });
 }
 
-// ---- Gevels: 4 ingangen beneden, open ramen overal ----
-buildWall('x',13,-13,13,F[0],[{a:-1.6,b:1.6,type:D},{a:-9,b:-6.5,type:W},{a:5,b:7.5,type:W}]);
-buildWall('x',-13,-13,13,F[0],[{a:3,b:6,type:D},{a:-8,b:-5.5,type:W},{a:-2,b:.5,type:W}]);
-buildWall('z',-13,-13,13,F[0],[{a:-6,b:-3,type:D},{a:2,b:4.5,type:W},{a:7,b:9.5,type:W}]);
-buildWall('z',13,-13,13,F[0],[{a:3,b:6,type:D},{a:-9,b:-6.5,type:W},{a:-4,b:-1.5,type:W}]);
-buildWall('x',13,-13,13,F[1],[{a:-10,b:-7.5,type:W},{a:-2,b:.5,type:W},{a:6,b:8.5,type:W}]);
-buildWall('x',-13,-13,13,F[1],[{a:-8,b:-5.5,type:W},{a:2,b:4.5,type:W}]);
-buildWall('z',-13,-13,13,F[1],[{a:-6,b:-3.5,type:W},{a:4,b:6.5,type:W}]);
-buildWall('z',13,-13,13,F[1],[{a:-6,b:-3.5,type:W},{a:4,b:6.5,type:W}]);
-buildWall('x',13,-13,13,F[2],[{a:-9,b:-6.5,type:W},{a:1,b:3.5,type:W}]);
-buildWall('x',-13,-13,13,F[2],[{a:-4,b:-1.5,type:W},{a:5,b:7.5,type:W}]);
-buildWall('z',-13,-13,13,F[2],[{a:-8,b:-5.5,type:W},{a:6,b:8.5,type:W}]);
-buildWall('z',13,-13,13,F[2],[{a:-8,b:-5.5,type:W},{a:3,b:5.5,type:W}]);
-
-// ---- Vloeren met twee trapgaten per verdieping ----
-const HOLES={
-  1:[{x0:9,x1:13.2,z0:.4,z1:11.6},{x0:-13.2,x1:-9,z0:-11.6,z1:-.4}],
-  2:[{x0:9,x1:13.2,z0:-11.6,z1:-.4},{x0:-13.2,x1:-9,z0:.4,z1:11.6}]
-};
-function slabPiece(x0,x1,z0,z1,y,mat=slabMat){ addBox((x0+x1)/2,y,(z0+z1)/2,x1-x0,.35,z1-z0,mat,{collide:false}); }
-slabPiece(-9,9,-13,13,F[1]-.17);
-slabPiece(9,13,-13,.4,F[1]-.17);  slabPiece(9,13,11.6,13,F[1]-.17);
-slabPiece(-13,-9,-13,-11.6,F[1]-.17); slabPiece(-13,-9,-.4,13,F[1]-.17);
-slabPiece(-9,9,-13,13,F[2]-.17);
-slabPiece(9,13,-13,-11.6,F[2]-.17); slabPiece(9,13,-.4,13,F[2]-.17);
-slabPiece(-13,-9,-13,.4,F[2]-.17);  slabPiece(-13,-9,11.6,13,F[2]-.17);
-slabPiece(-13,13,-13,13,CEIL);
-
-// ---- Trappen ----
-const RAMPS=[
-  {x0:9.4,x1:12.8, zLow:11, zHigh:1,  yLow:F[0], yHigh:F[1], xa:9,   xb:13.2, za:.4,   zb:11.6},
-  {x0:-12.8,x1:-9.4, zLow:-11, zHigh:-1, yLow:F[0], yHigh:F[1], xa:-13.2, xb:-9, za:-11.6, zb:-.4},
-  {x0:9.4,x1:12.8, zLow:-11, zHigh:-1, yLow:F[1], yHigh:F[2], xa:9,  xb:13.2, za:-11.6, zb:-.4},
-  {x0:-12.8,x1:-9.4, zLow:11, zHigh:1, yLow:F[1], yHigh:F[2], xa:-13.2, xb:-9, za:.4,  zb:11.6}
-];
+let HOLES={1:[],2:[]};
+let RAMPS=[];
 const rampMat=new THREE.MeshLambertMaterial({color:0x7a6a50});
 const railMat=new THREE.MeshLambertMaterial({color:0x4a4a52});
-RAMPS.forEach(r=>{
-  const dz=r.zHigh-r.zLow, dy=r.yHigh-r.yLow, len=Math.hypot(dz,dy);
-  const m=new THREE.Mesh(new THREE.BoxGeometry(r.x1-r.x0,.3,len),rampMat);
-  m.position.set((r.x0+r.x1)/2,(r.yLow+r.yHigh)/2,(r.zLow+r.zHigh)/2);
-  m.rotation.x=-Math.atan2(dy,dz); m.castShadow=m.receiveShadow=true;
-  scene.add(m); solids.push(m);
-  [r.x0+.12,r.x1-.12].forEach(rx=>{
-    const rail=new THREE.Mesh(new THREE.BoxGeometry(.1,.1,len),railMat);
-    rail.position.set(rx,(r.yLow+r.yHigh)/2+1,(r.zLow+r.zHigh)/2);
-    rail.rotation.x=-Math.atan2(dy,dz); scene.add(rail);
+function slabPiece(x0,x1,z0,z1,y,mat=slabMat){ addBox((x0+x1)/2,y,(z0+z1)/2,x1-x0,.35,z1-z0,mat,{collide:false}); }
+function buildRamp(r){
+  const dc=r.highC-r.lowC, dy=r.yHigh-r.yLow, len=Math.hypot(dc,dy), wid=Math.abs(r.w1-r.w0);
+  const cx=r.axis==='z'?(r.w0+r.w1)/2:(r.lowC+r.highC)/2;
+  const cz=r.axis==='z'?(r.lowC+r.highC)/2:(r.w0+r.w1)/2;
+  const m=new THREE.Mesh(new THREE.BoxGeometry(r.axis==='z'?wid:len,.3,r.axis==='z'?len:wid),rampMat);
+  m.position.set(cx,(r.yLow+r.yHigh)/2,cz);
+  if(r.axis==='z') m.rotation.x=-Math.atan2(dy,dc); else m.rotation.z=Math.atan2(dy,dc);
+  m.castShadow=m.receiveShadow=true; world.add(m); solids.push(m);
+  [Math.min(r.w0,r.w1)+.12,Math.max(r.w0,r.w1)-.12].forEach(rw=>{
+    const rail=new THREE.Mesh(new THREE.BoxGeometry(r.axis==='z'?.1:len,.1,r.axis==='z'?len:.1),railMat);
+    rail.position.set(r.axis==='z'?rw:cx,(r.yLow+r.yHigh)/2+1,r.axis==='z'?cz:rw);
+    if(r.axis==='z') rail.rotation.x=-Math.atan2(dy,dc); else rail.rotation.z=Math.atan2(dy,dc);
+    world.add(rail);
   });
-});
+}
 
 // ============================================================
 //  MEUBILAIR-BOUWSTENEN
@@ -459,7 +472,7 @@ function makeShelf(x,y,z,rot=0){
     for(let j=-1;j<=1;j++){
       const b=new THREE.Mesh(new THREE.BoxGeometry(rot?.24:.12,.34,rot?.12:.24),
         new THREE.MeshLambertMaterial({color:[0x8a3c3c,0x3c5a8a,0x3c8a5a,0x8a7a3c][Math.floor(Math.random()*4)]}));
-      b.position.set(x+(rot?0:j*.4),yy+.22,z+(rot?j*.4:0)); scene.add(b);
+      b.position.set(x+(rot?0:j*.4),yy+.22,z+(rot?j*.4:0)); world.add(b);
     }
   }
 }
@@ -469,13 +482,13 @@ function makeServerRack(x,y,z,rot=0){
   for(let i=0;i<7;i++){
     const led=new THREE.Mesh(new THREE.BoxGeometry(rot?.04:.5,.05,rot?.5:.04),
       new THREE.MeshBasicMaterial({color:Math.random()<.5?0x33ff66:0xff8833}));
-    led.position.set(x+(rot?.47:0),y+.5+i*.24,z+(rot?0:.47)); scene.add(led);
+    led.position.set(x+(rot?.47:0),y+.5+i*.24,z+(rot?0:.47)); world.add(led);
   }
 }
 function makePlant(x,y,z){
   addCyl(x,y+.28,z,.32,.56,new THREE.MeshLambertMaterial({color:0x8a5a3c}));
   const leaves=new THREE.Mesh(new THREE.ConeGeometry(.55,1.3,7),new THREE.MeshLambertMaterial({color:0x2f7a3f}));
-  leaves.position.set(x,y+1.2,z); leaves.castShadow=true; scene.add(leaves);
+  leaves.position.set(x,y+1.2,z); leaves.castShadow=true; world.add(leaves);
 }
 function makeTV(x,y,z,rotY){
   addBox(x,y,z,rotY?.1:1.9,1.05,rotY?1.9:.1,blackMat,{collide:false});
@@ -491,12 +504,51 @@ function makeLamp(x,y,z,color=0xffd9a0,intensity=.8,range=15,real=false){
   const shade=new THREE.Mesh(new THREE.ConeGeometry(.42,.48,10),new THREE.MeshLambertMaterial({color:0x2e2e34}));
   shade.position.set(x,y+3.2,z);
   const bulb=new THREE.Mesh(new THREE.SphereGeometry(.14,8,8),new THREE.MeshBasicMaterial({color}));
-  bulb.position.set(x,y+2.95,z); scene.add(shade,bulb);
+  bulb.position.set(x,y+2.95,z); world.add(shade,bulb);
   if(real){
-    const l=new THREE.PointLight(color,intensity,range); l.position.set(x,y+2.9,z); scene.add(l);
+    const l=new THREE.PointLight(color,intensity,range); l.position.set(x,y+2.9,z); world.add(l);
     lampsList.push({light:l,base:intensity,flicker:Math.random()<.28});
   }
 }
+
+
+function buildDefaultMap(){
+// ---- Gevels: 4 ingangen beneden, open ramen overal ----
+buildWall('x',13,-13,13,F[0],[{a:-1.6,b:1.6,type:D},{a:-9,b:-6.5,type:W},{a:5,b:7.5,type:W}]);
+buildWall('x',-13,-13,13,F[0],[{a:3,b:6,type:D},{a:-8,b:-5.5,type:W},{a:-2,b:.5,type:W}]);
+buildWall('z',-13,-13,13,F[0],[{a:-6,b:-3,type:D},{a:2,b:4.5,type:W},{a:7,b:9.5,type:W}]);
+buildWall('z',13,-13,13,F[0],[{a:3,b:6,type:D},{a:-9,b:-6.5,type:W},{a:-4,b:-1.5,type:W}]);
+buildWall('x',13,-13,13,F[1],[{a:-10,b:-7.5,type:W},{a:-2,b:.5,type:W},{a:6,b:8.5,type:W}]);
+buildWall('x',-13,-13,13,F[1],[{a:-8,b:-5.5,type:W},{a:2,b:4.5,type:W}]);
+buildWall('z',-13,-13,13,F[1],[{a:-6,b:-3.5,type:W},{a:4,b:6.5,type:W}]);
+buildWall('z',13,-13,13,F[1],[{a:-6,b:-3.5,type:W},{a:4,b:6.5,type:W}]);
+buildWall('x',13,-13,13,F[2],[{a:-9,b:-6.5,type:W},{a:1,b:3.5,type:W}]);
+buildWall('x',-13,-13,13,F[2],[{a:-4,b:-1.5,type:W},{a:5,b:7.5,type:W}]);
+buildWall('z',-13,-13,13,F[2],[{a:-8,b:-5.5,type:W},{a:6,b:8.5,type:W}]);
+buildWall('z',13,-13,13,F[2],[{a:-8,b:-5.5,type:W},{a:3,b:5.5,type:W}]);
+
+// ---- Vloeren met twee trapgaten per verdieping ----
+HOLES={
+  1:[{x0:9,x1:13.2,z0:.4,z1:11.6},{x0:-13.2,x1:-9,z0:-11.6,z1:-.4}],
+  2:[{x0:9,x1:13.2,z0:-11.6,z1:-.4},{x0:-13.2,x1:-9,z0:.4,z1:11.6}]
+};
+slabPiece(-9,9,-13,13,F[1]-.17);
+slabPiece(9,13,-13,.4,F[1]-.17);  slabPiece(9,13,11.6,13,F[1]-.17);
+slabPiece(-13,-9,-13,-11.6,F[1]-.17); slabPiece(-13,-9,-.4,13,F[1]-.17);
+slabPiece(-9,9,-13,13,F[2]-.17);
+slabPiece(9,13,-13,-11.6,F[2]-.17); slabPiece(9,13,-.4,13,F[2]-.17);
+slabPiece(-13,-9,-13,.4,F[2]-.17);  slabPiece(-13,-9,11.6,13,F[2]-.17);
+slabPiece(-13,13,-13,13,CEIL);
+
+// ---- Trappen ----
+// axis:'z' = de trap loopt langs de z-as; w0..w1 is de breedte langs de andere as.
+RAMPS=[
+  {axis:'z', w0:9.4,  w1:12.8, lowC:11,  highC:1,  yLow:F[0], yHigh:F[1]},
+  {axis:'z', w0:-12.8,w1:-9.4, lowC:-11, highC:-1, yLow:F[0], yHigh:F[1]},
+  {axis:'z', w0:9.4,  w1:12.8, lowC:-11, highC:-1, yLow:F[1], yHigh:F[2]},
+  {axis:'z', w0:-12.8,w1:-9.4, lowC:11,  highC:1,  yLow:F[1], yHigh:F[2]}
+];
+RAMPS.forEach(buildRamp);
 
 // ============================================================
 //  PLATTEGROND
@@ -634,6 +686,10 @@ flat(0,F[2],-6,3.5,13,0x3a3a40);
 makeCabinet(0,F[2],-12.4,0,1.4);
 makeLamp(0,F[2],-7,0xffe0b0,.7,14);
 
+  SPAWNS=DEFAULT_SPAWNS.slice();
+  addDefaultPickups();
+}
+
 // ---------- Kamernamen voor de HUD ----------
 const ROOMS=[
   {f:0,x0:-9,x1:9,z0:2,z1:13,name:'🏢 Lobby'},
@@ -653,6 +709,7 @@ const ROOMS=[
 function roomName(x,z,feetY){
   if(Math.abs(x)>13||Math.abs(z)>13) return '🌃 Buiten';
   const fl=feetY>F[2]-1?2:feetY>F[1]-1?1:0;
+  if(customMap) return (customMap.name||'Eigen map')+' · verd. '+(fl+1);
   if(x<-9||x>9) return '🪜 Trappenhuis · verd. '+(fl+1);
   const r=ROOMS.find(r=>r.f===fl&&x>=r.x0&&x<=r.x1&&z>=r.z0&&z<=r.z1);
   return r?r.name+' · verd. '+(fl+1):'verd. '+(fl+1);
@@ -752,13 +809,90 @@ function addPickup(id,type,x,floorY,z){
   const glow=new THREE.Mesh(new THREE.SphereGeometry(.16,8,8),
     new THREE.MeshBasicMaterial({color:type==='sniper'?0x66ccff:0xff8844}));
   glow.position.y=-.35; holder.add(glow);
-  holder.position.set(x,floorY+1.1,z); scene.add(holder);
+  holder.position.set(x,floorY+1.1,z); world.add(holder);
   pickups.push({id,type,group:holder,home:new THREE.Vector3(x,floorY+1.1,z),active:true,timer:0});
 }
-addPickup('s1','sniper',5.5,F[2],-8);    // serverruimte, boven
-addPickup('s2','sniper',-8.2,F[0],-5.5); // kantine, beneden
-addPickup('r1','rpg',0,F[1],1.5);        // gang, midden
-addPickup('r2','rpg',-2.6,F[2],11.5);    // kantoortuin, boven
+function addDefaultPickups(){
+  addPickup('s1','sniper',5.5,F[2],-8);    // serverruimte, boven
+  addPickup('s2','sniper',-8.2,F[0],-5.5); // kantine, beneden
+  addPickup('r1','rpg',0,F[1],1.5);        // gang, midden
+  addPickup('r2','rpg',-2.6,F[2],11.5);    // kantoortuin, boven
+}
+
+
+// ============================================================
+//  EIGEN MAP INLADEN (uit de Map Editor)
+// ============================================================
+let customMap=null;
+const PROP_BUILDERS={
+  bed:(x,y,z,r)=>makeBed(x,y,z,r), couch:(x,y,z,r)=>makeCouch(x,y,z,r?2:0),
+  armchair:(x,y,z,r)=>makeArmchair(x,y,z,r?2:0), desk:(x,y,z,r)=>makeDesk(x,y,z,r),
+  table:(x,y,z)=>makeTable(x,y,z), chair:(x,y,z,r)=>makeChair(x,y,z,r?2:0),
+  cabinet:(x,y,z,r)=>makeCabinet(x,y,z,r), shelf:(x,y,z,r)=>makeShelf(x,y,z,r),
+  counter:(x,y,z,r)=>makeCounter(x,y,z,r?.9:4,r?4:.9), fridge:(x,y,z,r)=>makeFridge(x,y,z,r),
+  server:(x,y,z,r)=>makeServerRack(x,y,z,r), crate:(x,y,z)=>makeCrate(x,y,z,1.1),
+  sandbag:(x,y,z,r)=>makeSandbag(x,y,z,r), barrel:(x,y,z)=>makeBarrel(x,y,z),
+  plant:(x,y,z)=>makePlant(x,y,z), tv:(x,y,z,r)=>makeTV(x,y+1.7,z,r?Math.PI/2:0),
+  whiteboard:(x,y,z,r)=>makeWhiteboard(x,y+2.3,z,r?Math.PI/2:0)
+};
+function clearWorld(){
+  while(world.children.length){
+    const c=world.children[0];
+    world.remove(c);
+    c.traverse&&c.traverse(o=>{ if(o.geometry) o.geometry.dispose(); });
+  }
+  solids.length=0; colliders.length=0; platforms.length=0;
+  lampsList.length=0; pickups.length=0;
+  HOLES={1:[],2:[]}; RAMPS=[];
+}
+function buildFromMap(m){
+  clearWorld();
+  // muren
+  (m.walls||[]).forEach(w=>{
+    const ops=(w.op||[]).map(o=>({a:o.a,b:o.b,type:o.t==='window'?W:D}));
+    const outer=Math.abs(w.fixed)>=12.5;
+    buildWall(w.axis,w.fixed,w.a,w.b,F[w.f],ops,outer?wallMat:wallMatIn,outer?.4:.35);
+  });
+  // trappen + trapgaten
+  (m.stairs||[]).forEach(s=>{
+    const r={axis:s.axis,w0:s.w0,w1:s.w1,lowC:s.lowC,highC:s.highC,yLow:F[s.f],yHigh:F[s.f+1]};
+    RAMPS.push(r); buildRamp(r);
+    const c0=Math.min(s.lowC,s.highC)-.6, c1=Math.max(s.lowC,s.highC)+.6;
+    const p0=Math.min(s.w0,s.w1)-.2, p1=Math.max(s.w0,s.w1)+.2;
+    const hole=s.axis==='z'?{x0:p0,x1:p1,z0:c0,z1:c1}:{x0:c0,x1:c1,z0:p0,z1:p1};
+    for(let f=s.f+1;f<=2;f++){ if(f===s.f+1) (HOLES[f]=HOLES[f]||[]).push(hole); }
+  });
+  // vloeren (met gaten uitgespaard via een rasterbenadering)
+  for(let f=1;f<=2;f++) buildSlabWithHoles(F[f]-.17,HOLES[f]||[]);
+  slabPiece(-13,13,-13,13,CEIL);
+  // meubels
+  (m.props||[]).forEach(p=>{ const b=PROP_BUILDERS[p.type]; if(b) b(p.x,F[p.f],p.z,p.rot?1:0); });
+  // lampen (max 9 echte)
+  let realCount=0;
+  (m.lamps||[]).forEach(l=>{
+    const real=l.real&&realCount<9; if(real) realCount++;
+    makeLamp(l.x,F[l.f],l.z,0xffd9a0,1.0,24,real);
+  });
+  // spawns
+  SPAWNS=(m.spawns&&m.spawns.length? m.spawns.map(s=>({x:s.x,z:s.z,f:s.f})) : [{x:0,z:0,f:0}]);
+  // wapens
+  (m.pickups||[]).forEach((p,i)=>addPickup('m'+i,p.type,p.x,F[p.f],p.z));
+  customMap=m;
+  document.getElementById('mapInfo').textContent='Map: '+(m.name||'eigen map');
+}
+// Vloer opdelen in tegels van 1 m en de gaten overslaan
+function buildSlabWithHoles(y,holes){
+  const step=1;
+  for(let x=-13;x<13;x+=step){
+    let runStart=null;
+    for(let z=-13;z<=13;z+=step){
+      const cx=x+step/2, cz=z+step/2;
+      const solid=z<13 && !holes.some(h=>cx>h.x0&&cx<h.x1&&cz>h.z0&&cz<h.z1);
+      if(solid&&runStart===null) runStart=z;
+      if((!solid||z>=13)&&runStart!==null){ slabPiece(x,x+step,runStart,z,y); runStart=null; }
+    }
+  }
+}
 
 // ============================================================
 //  TEGENSTANDER
@@ -851,11 +985,12 @@ function explosionFX(pos){
 //  SPELER
 // ============================================================
 const EYE_STAND=1.7, EYE_SNEAK=1.05;
-const SPAWNS=[
+const DEFAULT_SPAWNS=[
   {x:0,z:11.8,f:0},{x:-6.5,z:-1,f:0},{x:0,z:-2.5,f:0},{x:6,z:-2,f:0},{x:11,z:-8,f:0},{x:-11,z:7,f:0},
   {x:-7.5,z:11,f:1},{x:7,z:11.5,f:1},{x:-3,z:-11.5,f:1},{x:7,z:-8,f:1},{x:11,z:5,f:1},{x:-11,z:-7,f:1},
   {x:-7.5,z:5,f:2},{x:7.5,z:5,f:2},{x:-4,z:-11.5,f:2},{x:7,z:-6,f:2},{x:0,z:-3,f:2},{x:11,z:-6,f:2}
 ];
+let SPAWNS=DEFAULT_SPAWNS.slice();
 let yaw=Math.PI,pitch=0;
 const keys={};
 const player={pos:new THREE.Vector3(0,1.7,22),feetY:0,eye:EYE_STAND,r:.45,hp:100,alive:true};
@@ -893,8 +1028,11 @@ function groundHeight(x,z,feet){
   if(floorExists(1,x,z)) cands.push(F[1]);
   if(floorExists(2,x,z)) cands.push(F[2]);
   RAMPS.forEach(r=>{
-    if(x>r.xa&&x<r.xb&&z>Math.min(r.za,r.zb)-.6&&z<Math.max(r.za,r.zb)+.6){
-      const t=Math.min(Math.max((z-r.zLow)/(r.zHigh-r.zLow),0),1);
+    const perp=r.axis==='z'?x:z, along=r.axis==='z'?z:x;
+    const p0=Math.min(r.w0,r.w1)-.2, p1=Math.max(r.w0,r.w1)+.2;
+    const c0=Math.min(r.lowC,r.highC)-.6, c1=Math.max(r.lowC,r.highC)+.6;
+    if(perp>p0&&perp<p1&&along>c0&&along<c1){
+      const t=Math.min(Math.max((along-r.lowC)/(r.highC-r.lowC),0),1);
       cands.push(r.yLow+t*(r.yHigh-r.yLow));
     }
   });
@@ -1227,6 +1365,7 @@ function takePickup(p){
   switchWeapon(p.type);
   showMsg(p.type==='sniper'?'🎯 SNIPER — 3 kogels':'🚀 RPG — 1 raket','#ffcf5c',1200);
 }
+buildDefaultMap();   // wereld opbouwen nadat alle bouwstenen bestaan
 updateHUD();
 animate();
 addEventListener('resize',()=>{
